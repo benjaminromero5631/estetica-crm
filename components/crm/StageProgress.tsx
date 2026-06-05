@@ -1,6 +1,7 @@
 'use client'
 
 import { Lead, EtapaConfig } from '@/lib/types'
+import { clinicConfig } from '@/lib/config'
 
 export default function StageProgress({ leads, etapas }: { leads: Lead[]; etapas: EtapaConfig[] }) {
   const total = leads.length || 1
@@ -21,7 +22,7 @@ export default function StageProgress({ leads, etapas }: { leads: Lead[]; etapas
               <div className="h-2 rounded-full overflow-hidden" style={{ background: '#E5E7EB' }}>
                 <div
                   className="h-full rounded-full transition-all"
-                  style={{ width: `${pct}%`, background: color || '#1E40AF' }}
+                  style={{ width: `${pct}%`, background: color || clinicConfig.primaryColor }}
                 />
               </div>
             </div>

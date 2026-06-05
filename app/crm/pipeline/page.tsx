@@ -6,6 +6,7 @@ import Pipeline from '@/components/crm/Pipeline'
 import LeadDetailPanel from '@/components/crm/LeadDetailPanel'
 import NewLeadModal from '@/components/crm/NewLeadModal'
 import { Lead, EtapaConfig } from '@/lib/types'
+import { clinicConfig } from '@/lib/config'
 import { Plus } from 'lucide-react'
 
 export default function PipelinePage() {
@@ -33,7 +34,7 @@ export default function PipelinePage() {
             <button
               onClick={() => setShowModal(true)}
               className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-medium"
-              style={{ background: '#1E40AF' }}
+              style={{ background: clinicConfig.primaryColor }}
             >
               <Plus className="w-4 h-4" /> Nuevo Lead
             </button>

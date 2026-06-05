@@ -3,17 +3,8 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
 import { Lead } from '@/lib/types'
+import { clinicConfig } from '@/lib/config'
 import { toast } from 'sonner'
-
-const SERVICIOS = [
-  'Botox',
-  'Rellenos dérmicos',
-  'Limpieza facial',
-  'Diseño de cejas',
-  'Mesoterapia',
-  'Depilación láser',
-  'Otro',
-]
 
 const inputStyle = {
   color: '#0F172A',
@@ -107,7 +98,7 @@ export default function NewLeadModal({ onClose, onCreated }: { onClose: () => vo
               style={inputStyle}
             >
               <option value="" style={{ color: '#94A3B8' }}>Seleccionar servicio...</option>
-              {SERVICIOS.map((s) => (
+              {clinicConfig.services.map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
@@ -117,7 +108,7 @@ export default function NewLeadModal({ onClose, onCreated }: { onClose: () => vo
             type="submit"
             disabled={loading}
             className="w-full text-white rounded-lg py-2 text-sm font-medium disabled:opacity-50 mt-2"
-            style={{ background: '#1E40AF' }}
+            style={{ background: clinicConfig.primaryColor }}
           >
             {loading ? 'Creando...' : 'Crear Lead'}
           </button>

@@ -1,6 +1,7 @@
 'use client'
 
 import { Lead, EtapaConfig } from '@/lib/types'
+import { clinicConfig } from '@/lib/config'
 import { X, Phone, Mail, Calendar } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -53,13 +54,13 @@ export default function LeadDetailPanel({ lead, etapas, onClose, onUpdate, onDel
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <div className="space-y-1 text-sm" style={{ color: '#4B5563' }}>
           {lead.telefono && (
-            <div className="flex items-center gap-2"><Phone className="w-4 h-4" style={{ color: '#38BCD4' }} />{lead.telefono}</div>
+            <div className="flex items-center gap-2"><Phone className="w-4 h-4" style={{ color: clinicConfig.accentColor }} />{lead.telefono}</div>
           )}
           {lead.email && (
-            <div className="flex items-center gap-2"><Mail className="w-4 h-4" style={{ color: '#38BCD4' }} />{lead.email}</div>
+            <div className="flex items-center gap-2"><Mail className="w-4 h-4" style={{ color: clinicConfig.accentColor }} />{lead.email}</div>
           )}
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4" style={{ color: '#38BCD4' }} />
+            <Calendar className="w-4 h-4" style={{ color: clinicConfig.accentColor }} />
             {format(new Date(lead.created_at), 'dd MMM yyyy', { locale: es })}
           </div>
         </div>
@@ -95,7 +96,7 @@ export default function LeadDetailPanel({ lead, etapas, onClose, onUpdate, onDel
         {lead.valor_estimado != null && (
           <div>
             <label className="text-xs font-medium block mb-1" style={{ color: '#6B7280' }}>Valor estimado</label>
-            <p className="text-sm font-semibold" style={{ color: '#1E40AF' }}>
+            <p className="text-sm font-semibold" style={{ color: clinicConfig.primaryColor }}>
               ${lead.valor_estimado.toLocaleString('es-CL')}
             </p>
           </div>
@@ -118,7 +119,7 @@ export default function LeadDetailPanel({ lead, etapas, onClose, onUpdate, onDel
           onClick={save}
           disabled={saving}
           className="flex-1 text-white rounded-lg py-2 text-sm font-medium disabled:opacity-50"
-          style={{ background: '#1E40AF' }}
+          style={{ background: clinicConfig.primaryColor }}
         >
           {saving ? 'Guardando...' : 'Guardar'}
         </button>

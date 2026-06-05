@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase-server'
+import { clinicConfig } from '@/lib/config'
 import TopBar from '@/components/layout/TopBar'
 import MetricCards from '@/components/crm/MetricCards'
 import StageProgress from '@/components/crm/StageProgress'
@@ -40,7 +41,7 @@ export default async function MetricasPage() {
                       className="h-full rounded-full"
                       style={{
                         width: `${Math.min((count / allLeads.length) * 100, 100)}%`,
-                        background: '#38BCD4',
+                        background: clinicConfig.accentColor,
                       }}
                     />
                   </div>

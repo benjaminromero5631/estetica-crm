@@ -12,6 +12,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
 import { Lead, EtapaConfig } from '@/lib/types'
+import { clinicConfig } from '@/lib/config'
 import LeadCard from './LeadCard'
 import { toast } from 'sonner'
 
@@ -30,11 +31,11 @@ function Column({ etapa, leads, onCardClick }: { etapa: EtapaConfig; leads: Lead
       </div>
       <div
         ref={setNodeRef}
-        className="flex-1 min-h-24 rounded-xl p-2 space-y-2 transition-colors"
+        className="flex-1 rounded-xl p-2 space-y-2 transition-colors"
         style={
           isOver
-            ? { background: '#EFF6FF', border: '2px dashed #1E40AF' }
-            : { background: '#E8F0FE' }
+            ? { background: '#EFF6FF', border: `2px dashed ${clinicConfig.primaryColor}`, minHeight: '6rem' }
+            : { background: '#E8F0FE', minHeight: '6rem' }
         }
       >
         <SortableContext items={leads.map((l) => l.id)} strategy={verticalListSortingStrategy}>
@@ -42,6 +43,15 @@ function Column({ etapa, leads, onCardClick }: { etapa: EtapaConfig; leads: Lead
             <LeadCard key={lead.id} lead={lead} onClick={onCardClick} />
           ))}
         </SortableContext>
+
+        {leads.length === 0 && !isOver && (
+          <div
+            className="flex items-center justify-center h-16 rounded-lg"
+            style={{ border: '1.5px dashed #CBD5E1' }}
+          >
+            <span className="text-xs" style={{ color: '#94A3B8' }}>Sin leads</span>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -56,7 +66,6 @@ interface Props {
 export default function Pipeline({ initialLeads, etapas, onLeadClick }: Props) {
   const [leads, setLeads] = useState(initialLeads)
 
-  // Sync when parent fetches data (useState only uses initialLeads on first render)
   useEffect(() => {
     setLeads(initialLeads)
   }, [initialLeads])

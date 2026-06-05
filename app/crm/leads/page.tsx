@@ -5,6 +5,7 @@ import TopBar from '@/components/layout/TopBar'
 import LeadDetailPanel from '@/components/crm/LeadDetailPanel'
 import NewLeadModal from '@/components/crm/NewLeadModal'
 import { Lead, EtapaConfig } from '@/lib/types'
+import { clinicConfig } from '@/lib/config'
 import { Plus, Search } from 'lucide-react'
 
 export default function LeadsPage() {
@@ -50,7 +51,7 @@ export default function LeadsPage() {
             <button
               onClick={() => setShowModal(true)}
               className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-medium"
-              style={{ background: '#1E40AF' }}
+              style={{ background: clinicConfig.primaryColor }}
             >
               <Plus className="w-4 h-4" /> Nuevo Lead
             </button>
@@ -87,7 +88,7 @@ export default function LeadsPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-xs font-semibold" style={{ color: '#1E40AF' }}>
+                      <td className="px-4 py-3 text-xs font-semibold" style={{ color: clinicConfig.primaryColor }}>
                         {lead.valor_estimado != null ? `$${lead.valor_estimado.toLocaleString('es-CL')}` : '-'}
                       </td>
                       <td className="px-4 py-3 text-xs" style={{ color: '#9CA3AF' }}>
@@ -97,7 +98,31 @@ export default function LeadsPage() {
                   )
                 })}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-sm" style={{ color: '#9CA3AF' }}>No hay leads</td></tr>
+                  <tr>
+                    <td colSpan={6}>
+                      <div className="flex flex-col items-center justify-center py-16 gap-3">
+                        <div className="rounded-full p-5" style={{ background: '#EFF6FF' }}>
+                          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                            <circle cx="20" cy="20" r="20" fill="#DBEAFE" />
+                            <path d="M13 27c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round"/>
+                            <circle cx="20" cy="16" r="4" stroke="#93C5FD" strokeWidth="2"/>
+                          </svg>
+                        </div>
+                        <p className="text-sm font-medium" style={{ color: '#374151' }}>
+                          {search ? 'Sin resultados para esa búsqueda' : 'No hay leads aún'}
+                        </p>
+                        {!search && (
+                          <button
+                            onClick={() => setShowModal(true)}
+                            className="text-sm font-medium px-4 py-2 rounded-lg text-white mt-1"
+                            style={{ background: clinicConfig.primaryColor }}
+                          >
+                            Crear primer lead
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
