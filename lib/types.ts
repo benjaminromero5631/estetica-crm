@@ -9,6 +9,9 @@ export interface Lead {
   notas?: string
   valor_estimado?: number
   convertido_at?: string | null
+  deposito_pagado?: boolean
+  fecha_cita?: string | null
+  ultima_vez_clinica?: string | null
   created_at: string
   updated_at: string
 }

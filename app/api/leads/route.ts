@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   const supabase = serviceClient()
   const body = await request.json()
 
-  const { nombre, telefono, email, servicio_interes, fuente, notas, etapa } = body
+  const { nombre, telefono, email, servicio_interes, fuente, notas, etapa, valor_estimado, ultima_vez_clinica } = body
 
   const { data, error } = await supabase
     .from('leads')
@@ -36,6 +36,8 @@ export async function POST(request: Request) {
       fuente: fuente || null,
       notas: notas || null,
       etapa: etapa ?? 'nuevo',
+      valor_estimado: valor_estimado || null,
+      ultima_vez_clinica: ultima_vez_clinica || null,
     }])
     .select()
     .single()
