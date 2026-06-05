@@ -110,13 +110,6 @@ export default function CEODashboard({
   const maxFact = Math.max(...tendencia.map((t) => t.facturado), 1)
   const maxLeads = Math.max(...tendencia.map((t) => t.leads), 1)
 
-  // Pipeline alert: leads stuck (no update in 7+ days — approximated by created_at for now)
-  const stuckCount = m.leads_en_pipeline
-
-  // Goal progress
-  const goal = clinicConfig.monthlyRevenueGoal
-  const goalPct = goal > 0 ? Math.min(Math.round((m.facturado_este_mes / goal) * 100), 100) : null
-
   const etapaColors: Record<string, string> = {}
   ;(m.leads_por_etapa ?? []).forEach((e) => { etapaColors[e.etapa] = e.color })
 

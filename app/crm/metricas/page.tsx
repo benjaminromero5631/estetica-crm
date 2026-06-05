@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
 import TopBar from '@/components/layout/TopBar'
 import { formatCLP } from '@/lib/format'
-import { Percent } from 'lucide-react'
 
 interface Metricas {
   total_leads: number
