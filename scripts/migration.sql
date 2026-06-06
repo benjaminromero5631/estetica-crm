@@ -89,7 +89,7 @@ BEGIN
       ) f
     ),
 
-    -- Monthly trend (last 6 months)
+    -- Monthly trend (last 6 months, from stored snapshots only)
     'tendencia_mensual', (
       SELECT json_agg(json_build_object(
         'mes', to_char(mes, 'Mon YY'),
@@ -111,5 +111,72 @@ BEGIN
     )
   ) INTO result FROM leads;
   RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================================================
+-- MIGRATION: Monthly metrics history
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS metricas_mensuales (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  mes text NOT NULL UNIQUE,
+  mes_label text NOT NULL,
+  total_leads int DEFAULT 0,
+  total_reservas int DEFAULT 0,
+  tasa_conversion numeric DEFAULT 0,
+  facturado numeric DEFAULT 0,
+  ticket_promedio numeric DEFAULT 0,
+  performance_zeltra numeric DEFAULT 0,
+  leads_perdidos int DEFAULT 0,
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE metricas_mensuales ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'metricas_mensuales' AND policyname = 'service_role_all'
+  ) THEN
+    CREATE POLICY "service_role_all" ON metricas_mensuales FOR ALL USING (true);
+  END IF;
+END $$;
+
+CREATE OR REPLACE FUNCTION guardar_snapshot_mensual()
+RETURNS json AS $$
+DECLARE
+  mes_actual text := to_char(now() - interval '1 month', 'YYYY-MM');
+  mes_lbl text := initcap(to_char(now() - interval '1 month', 'TMMonth YYYY'));
+  snap json;
+BEGIN
+  INSERT INTO metricas_mensuales (
+    mes, mes_label, total_leads, total_reservas,
+    tasa_conversion, facturado, ticket_promedio,
+    performance_zeltra, leads_perdidos
+  )
+  SELECT
+    mes_actual,
+    mes_lbl,
+    COUNT(*) as total_leads,
+    COUNT(*) FILTER (WHERE etapa = 'reserva_con_deposito') as total_reservas,
+    ROUND(COUNT(*) FILTER (WHERE etapa = 'reserva_con_deposito') * 100.0 / NULLIF(COUNT(*), 0), 1),
+    COALESCE(SUM(valor_estimado) FILTER (WHERE etapa = 'reserva_con_deposito'), 0),
+    COALESCE(ROUND(AVG(valor_estimado) FILTER (WHERE etapa = 'reserva_con_deposito'), 0), 0),
+    COUNT(*) FILTER (WHERE etapa = 'reserva_con_deposito') * 15000,
+    COUNT(*) FILTER (WHERE etapa = 'perdido')
+  FROM leads
+  WHERE created_at >= date_trunc('month', now() - interval '1 month')
+    AND created_at < date_trunc('month', now())
+  ON CONFLICT (mes) DO UPDATE SET
+    total_leads = EXCLUDED.total_leads,
+    total_reservas = EXCLUDED.total_reservas,
+    tasa_conversion = EXCLUDED.tasa_conversion,
+    facturado = EXCLUDED.facturado,
+    ticket_promedio = EXCLUDED.ticket_promedio,
+    performance_zeltra = EXCLUDED.performance_zeltra,
+    leads_perdidos = EXCLUDED.leads_perdidos;
+
+  SELECT row_to_json(m) INTO snap FROM metricas_mensuales m WHERE mes = mes_actual;
+  RETURN snap;
 END;
 $$ LANGUAGE plpgsql;
