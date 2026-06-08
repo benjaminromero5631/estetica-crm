@@ -16,6 +16,22 @@ export interface Lead {
   updated_at: string
 }
 
+export interface Cita {
+  id: string
+  lead_id: string | null
+  titulo: string
+  fecha_inicio: string
+  fecha_fin: string
+  notas?: string | null
+  estado: 'pendiente' | 'completada' | 'cancelada'
+  created_at: string
+  updated_at: string
+  // joined from leads
+  nombre?: string | null
+  telefono?: string | null
+  servicio_interes?: string | null
+}
+
 export interface EtapaConfig {
   id: string
   nombre: string

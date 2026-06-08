@@ -115,6 +115,38 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ============================================================
+-- MIGRATION: Calendario de citas
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS citas (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  lead_id uuid REFERENCES leads(id) ON DELETE SET NULL,
+  titulo text NOT NULL,
+  fecha_inicio timestamptz NOT NULL,
+  fecha_fin timestamptz NOT NULL,
+  notas text,
+  estado text DEFAULT 'pendiente',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE citas ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'citas' AND policyname = 'service_role_all'
+  ) THEN
+    CREATE POLICY "service_role_all" ON citas FOR ALL USING (true);
+  END IF;
+END $$;
+
+CREATE TRIGGER citas_updated_at
+BEFORE UPDATE ON citas
+FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS fecha_cita timestamptz;
+
+-- ============================================================
 -- MIGRATION: Monthly metrics history
 -- ============================================================
 
