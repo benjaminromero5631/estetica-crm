@@ -79,9 +79,21 @@ export default function HistorialClient({ rows, metricas, cronSecret }: Props) {
         <table className="w-full">
           <thead>
             <tr>
-              {['Mes', 'Leads', 'Reservas', 'Conversión %', 'Facturado', 'Ticket Prom', 'Performance Zeltra'].map(h => (
-                <th key={h} className="text-left text-xs font-semibold py-2 px-3" style={{ color: '#6B7280', borderBottom: '1px solid #E2E8F0' }}>
-                  {h}
+              {[
+                { label: 'Mes',               mobile: true  },
+                { label: 'Leads',             mobile: false },
+                { label: 'Reservas',          mobile: true  },
+                { label: 'Conversión %',      mobile: true  },
+                { label: 'Facturado',         mobile: true  },
+                { label: 'Ticket Prom',       mobile: false },
+                { label: 'Performance Zeltra', mobile: false },
+              ].map(h => (
+                <th
+                  key={h.label}
+                  className={`text-left text-xs font-semibold py-2 px-3 ${h.mobile ? '' : 'hidden md:table-cell'}`}
+                  style={{ color: '#6B7280', borderBottom: '1px solid #E2E8F0' }}
+                >
+                  {h.label}
                 </th>
               ))}
             </tr>
@@ -109,7 +121,7 @@ export default function HistorialClient({ rows, metricas, cronSecret }: Props) {
                     {r.mes_label}
                     {isGold && <span className="ml-1 text-[10px]" style={{ color: '#F59E0B' }}>★ mejor</span>}
                   </td>
-                  <Td>{r.total_leads} <Arrow pct={delta(r.total_leads, prev?.total_leads)} /></Td>
+                  <Td mobileHidden>{r.total_leads} <Arrow pct={delta(r.total_leads, prev?.total_leads)} /></Td>
                   <Td>{r.total_reservas} <Arrow pct={delta(r.total_reservas, prev?.total_reservas)} /></Td>
                   <Td>
                     <span style={{ color: r.tasa_conversion >= 20 ? '#16A34A' : r.tasa_conversion < 10 ? '#DC2626' : '#F59E0B' }}>
@@ -118,8 +130,8 @@ export default function HistorialClient({ rows, metricas, cronSecret }: Props) {
                     {' '}<Arrow pct={delta(r.tasa_conversion, prev?.tasa_conversion)} />
                   </Td>
                   <Td accent="#10B981">{formatCLP(r.facturado)} <Arrow pct={delta(r.facturado, prev?.facturado)} /></Td>
-                  <Td>{r.ticket_promedio > 0 ? formatCLP(r.ticket_promedio) : '—'}</Td>
-                  <Td accent="#3B82F6">{formatCLP(r.performance_zeltra)}</Td>
+                  <Td mobileHidden>{r.ticket_promedio > 0 ? formatCLP(r.ticket_promedio) : '—'}</Td>
+                  <Td mobileHidden accent="#3B82F6">{formatCLP(r.performance_zeltra)}</Td>
                 </tr>
               )
             })}
@@ -133,7 +145,7 @@ export default function HistorialClient({ rows, metricas, cronSecret }: Props) {
                     En curso
                   </span>
                 </td>
-                <Td>{metricas.leads_este_mes ?? 0}</Td>
+                <Td mobileHidden>{metricas.leads_este_mes ?? 0}</Td>
                 <Td>{metricas.convertidos_este_mes ?? 0}</Td>
                 <Td>
                   <span style={{ color: '#6B7280' }}>
@@ -143,8 +155,8 @@ export default function HistorialClient({ rows, metricas, cronSecret }: Props) {
                   </span>
                 </Td>
                 <Td accent="#10B981">{formatCLP(metricas.facturado_este_mes ?? 0)}</Td>
-                <Td>{metricas.ticket_promedio > 0 ? formatCLP(metricas.ticket_promedio) : '—'}</Td>
-                <Td>—</Td>
+                <Td mobileHidden>{metricas.ticket_promedio > 0 ? formatCLP(metricas.ticket_promedio) : '—'}</Td>
+                <Td mobileHidden>—</Td>
               </tr>
             )}
           </tbody>
@@ -154,10 +166,10 @@ export default function HistorialClient({ rows, metricas, cronSecret }: Props) {
   )
 }
 
-function Td({ children, accent }: { children: React.ReactNode; accent?: string }) {
+function Td({ children, accent, mobileHidden }: { children: React.ReactNode; accent?: string; mobileHidden?: boolean }) {
   return (
     <td
-      className="text-sm py-2 px-3"
+      className={`text-sm py-2 px-3 ${mobileHidden ? 'hidden md:table-cell' : ''}`}
       style={{ color: accent ?? '#374151', borderBottom: '1px solid #F1F5F9' }}
     >
       {children}

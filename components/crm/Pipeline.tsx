@@ -19,7 +19,7 @@ import { toast } from 'sonner'
 function Column({ etapa, leads, onCardClick }: { etapa: EtapaConfig; leads: Lead[]; onCardClick: (l: Lead) => void }) {
   const { setNodeRef, isOver } = useDroppable({ id: etapa.slug })
   return (
-    <div className="flex flex-col w-60 flex-shrink-0">
+    <div className="flex flex-col flex-shrink-0 w-[280px]">
       <div className="flex items-center justify-between mb-2">
         <span
           className="text-xs font-semibold px-2 py-0.5 rounded-full"
@@ -65,10 +65,16 @@ interface Props {
 
 export default function Pipeline({ initialLeads, etapas, onLeadClick }: Props) {
   const [leads, setLeads] = useState(initialLeads)
+  const [showHint, setShowHint] = useState(true)
 
   useEffect(() => {
     setLeads(initialLeads)
   }, [initialLeads])
+
+  useEffect(() => {
+    const t = setTimeout(() => setShowHint(false), 3000)
+    return () => clearTimeout(t)
+  }, [])
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
@@ -76,7 +82,7 @@ export default function Pipeline({ initialLeads, etapas, onLeadClick }: Props) {
     const { active, over } = event
     if (!over) return
 
-    const leadId = active.id as string
+    const leadId      = active.id as string
     const newEtapaSlug = over.id as string
 
     if (!etapas.find((e) => e.slug === newEtapaSlug)) return
@@ -98,17 +104,24 @@ export default function Pipeline({ initialLeads, etapas, onLeadClick }: Props) {
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {etapas.map((etapa) => (
-          <Column
-            key={etapa.slug}
-            etapa={etapa}
-            leads={leads.filter((l) => l.etapa === etapa.slug)}
-            onCardClick={onLeadClick}
-          />
-        ))}
-      </div>
-    </DndContext>
+    <div>
+      {showHint && (
+        <p className="text-xs text-center mb-2 md:hidden" style={{ color: '#94A3B8' }}>
+          ← desliza →
+        </p>
+      )}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <div className="flex gap-4 overflow-x-auto pb-4">
+          {etapas.map((etapa) => (
+            <Column
+              key={etapa.slug}
+              etapa={etapa}
+              leads={leads.filter((l) => l.etapa === etapa.slug)}
+              onCardClick={onLeadClick}
+            />
+          ))}
+        </div>
+      </DndContext>
+    </div>
   )
 }

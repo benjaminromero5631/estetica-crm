@@ -13,9 +13,9 @@ export default function LeadCard({ lead, onClick }: { lead: Lead; onClick: (l: L
     id: lead.id,
   })
 
-  const isReserva = lead.etapa === 'reserva_con_deposito'
+  const isReserva  = lead.etapa === 'reserva_con_deposito'
   const daysInStage = differenceInDays(new Date(), new Date(lead.updated_at ?? lead.created_at))
-  const isStuck = daysInStage >= 3 && !isReserva && lead.etapa !== 'perdido'
+  const isStuck    = daysInStage >= 3 && !isReserva && lead.etapa !== 'perdido'
 
   const waNumber = lead.telefono.replace(/\D/g, '')
 
@@ -63,30 +63,28 @@ export default function LeadCard({ lead, onClick }: { lead: Lead; onClick: (l: L
 
       {/* Footer */}
       <div className="flex items-center justify-between mt-2 gap-2">
-        {/* Fuente */}
         {lead.fuente ? (
           <span className="text-xs truncate" style={{ color: '#94A3B8' }}>{lead.fuente}</span>
         ) : <span />}
 
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Days stuck warning */}
           {isStuck && (
             <span className="text-xs font-medium px-1.5 py-0.5 rounded" style={{ background: '#FEF3C7', color: '#92400E' }}>
               {daysInStage}d
             </span>
           )}
 
-          {/* WhatsApp button */}
+          {/* WhatsApp — min 44px tap target */}
           <a
             href={`https://wa.me/${waNumber}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="flex items-center justify-center w-6 h-6 rounded-full transition-opacity hover:opacity-80"
+            className="flex items-center justify-center w-11 h-11 rounded-full transition-opacity hover:opacity-80 -mr-1 -mb-1"
             style={{ background: '#25D36615', color: '#25D366' }}
             title="Abrir WhatsApp"
           >
-            <MessageCircle className="w-3.5 h-3.5" />
+            <MessageCircle className="w-4 h-4" />
           </a>
         </div>
       </div>

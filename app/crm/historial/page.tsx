@@ -47,7 +47,7 @@ export default async function HistorialPage() {
   return (
     <div>
       <TopBar title="Historial Mensual" />
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-6">
 
         {/* Record cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

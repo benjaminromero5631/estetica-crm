@@ -114,10 +114,10 @@ export default function CEODashboard({
   ;(m.leads_por_etapa ?? []).forEach((e) => { etapaColors[e.etapa] = e.color })
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
 
       {/* KPI Row 1 — Revenue */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
         <KPICard
           label="Facturado Este Mes"
           value={formatCLP(m.facturado_este_mes)}
@@ -144,7 +144,7 @@ export default function CEODashboard({
       </div>
 
       {/* KPI Row 2 — Operaciones */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
         <KPICard
           label="Total Leads"
           value={String(m.total_leads)}

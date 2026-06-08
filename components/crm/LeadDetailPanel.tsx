@@ -44,93 +44,120 @@ export default function LeadDetailPanel({ lead, etapas, onClose, onUpdate, onDel
   }
 
   return (
-    <div className="w-80 min-h-screen bg-white border-l shadow-xl flex flex-col" style={{ borderColor: '#E2E8F0' }}>
-      <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: '#E2E8F0' }}>
-        <h2 className="font-semibold truncate" style={{ color: '#1F2937' }}>{lead.nombre}</h2>
-        <button onClick={onClose} style={{ color: '#94A3B8' }} className="hover:opacity-70">
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        <div className="space-y-1 text-sm" style={{ color: '#4B5563' }}>
-          {lead.telefono && (
-            <div className="flex items-center gap-2"><Phone className="w-4 h-4" style={{ color: clinicConfig.accentColor }} />{lead.telefono}</div>
-          )}
-          {lead.email && (
-            <div className="flex items-center gap-2"><Mail className="w-4 h-4" style={{ color: clinicConfig.accentColor }} />{lead.email}</div>
-          )}
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4" style={{ color: clinicConfig.accentColor }} />
-            {format(new Date(lead.created_at), 'dd MMM yyyy', { locale: es })}
-          </div>
+    <>
+      {/* Mobile backdrop */}
+      <div
+        className="fixed inset-0 bg-black/40 z-40 md:hidden"
+        onClick={onClose}
+      />
+
+      {/* Panel — bottom sheet on mobile, side panel on desktop */}
+      <div
+        className="
+          fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-xl flex flex-col
+          h-[85vh]
+          md:static md:h-auto md:min-h-screen md:w-80 md:rounded-none md:rounded-tl-none md:border-l
+        "
+        style={{ borderColor: '#E2E8F0' }}
+      >
+        {/* Drag handle on mobile */}
+        <div className="flex justify-center pt-3 pb-1 md:hidden">
+          <div className="w-10 h-1 rounded-full bg-gray-300" />
         </div>
 
-        <div>
-          <label className="text-xs font-medium block mb-1" style={{ color: '#6B7280' }}>Etapa</label>
-          <select
-            value={etapa}
-            onChange={(e) => setEtapa(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2 text-sm"
-            style={{ borderColor: '#E2E8F0' }}
+        <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: '#E2E8F0' }}>
+          <h2 className="font-semibold truncate" style={{ color: '#1F2937' }}>{lead.nombre}</h2>
+          <button
+            onClick={onClose}
+            style={{ color: '#94A3B8' }}
+            className="hover:opacity-70 min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
-            {etapas.map((e) => (
-              <option key={e.slug} value={e.slug}>{e.nombre}</option>
-            ))}
-          </select>
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        {lead.servicio_interes && (
-          <div>
-            <label className="text-xs font-medium block mb-1" style={{ color: '#6B7280' }}>Servicio</label>
-            <p className="text-sm" style={{ color: '#374151' }}>{lead.servicio_interes}</p>
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="space-y-1 text-sm" style={{ color: '#4B5563' }}>
+            {lead.telefono && (
+              <div className="flex items-center gap-2"><Phone className="w-4 h-4" style={{ color: clinicConfig.accentColor }} />{lead.telefono}</div>
+            )}
+            {lead.email && (
+              <div className="flex items-center gap-2"><Mail className="w-4 h-4" style={{ color: clinicConfig.accentColor }} />{lead.email}</div>
+            )}
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" style={{ color: clinicConfig.accentColor }} />
+              {format(new Date(lead.created_at), 'dd MMM yyyy', { locale: es })}
+            </div>
           </div>
-        )}
 
-        {lead.fuente && (
           <div>
-            <label className="text-xs font-medium block mb-1" style={{ color: '#6B7280' }}>Fuente</label>
-            <p className="text-sm" style={{ color: '#374151' }}>{lead.fuente}</p>
+            <label className="text-xs font-medium block mb-1" style={{ color: '#6B7280' }}>Etapa</label>
+            <select
+              value={etapa}
+              onChange={(e) => setEtapa(e.target.value)}
+              className="w-full border rounded-lg px-3 py-2 text-sm"
+              style={{ borderColor: '#E2E8F0' }}
+            >
+              {etapas.map((e) => (
+                <option key={e.slug} value={e.slug}>{e.nombre}</option>
+              ))}
+            </select>
           </div>
-        )}
 
-        {lead.valor_estimado != null && (
+          {lead.servicio_interes && (
+            <div>
+              <label className="text-xs font-medium block mb-1" style={{ color: '#6B7280' }}>Servicio</label>
+              <p className="text-sm" style={{ color: '#374151' }}>{lead.servicio_interes}</p>
+            </div>
+          )}
+
+          {lead.fuente && (
+            <div>
+              <label className="text-xs font-medium block mb-1" style={{ color: '#6B7280' }}>Fuente</label>
+              <p className="text-sm" style={{ color: '#374151' }}>{lead.fuente}</p>
+            </div>
+          )}
+
+          {lead.valor_estimado != null && (
+            <div>
+              <label className="text-xs font-medium block mb-1" style={{ color: '#6B7280' }}>Valor estimado</label>
+              <p className="text-sm font-semibold" style={{ color: clinicConfig.primaryColor }}>
+                ${lead.valor_estimado.toLocaleString('es-CL')}
+              </p>
+            </div>
+          )}
+
           <div>
-            <label className="text-xs font-medium block mb-1" style={{ color: '#6B7280' }}>Valor estimado</label>
-            <p className="text-sm font-semibold" style={{ color: clinicConfig.primaryColor }}>
-              ${lead.valor_estimado.toLocaleString('es-CL')}
-            </p>
+            <label className="text-xs font-medium block mb-1" style={{ color: '#6B7280' }}>Notas</label>
+            <textarea
+              value={notas}
+              onChange={(e) => setNotas(e.target.value)}
+              rows={5}
+              className="w-full border rounded-lg px-3 py-2 text-sm resize-none"
+              style={{ borderColor: '#E2E8F0' }}
+              placeholder="Agregar notas..."
+            />
           </div>
-        )}
+        </div>
 
-        <div>
-          <label className="text-xs font-medium block mb-1" style={{ color: '#6B7280' }}>Notas</label>
-          <textarea
-            value={notas}
-            onChange={(e) => setNotas(e.target.value)}
-            rows={5}
-            className="w-full border rounded-lg px-3 py-2 text-sm resize-none"
-            style={{ borderColor: '#E2E8F0' }}
-            placeholder="Agregar notas..."
-          />
+        <div className="p-4 border-t flex gap-2" style={{ borderColor: '#E2E8F0' }}>
+          <button
+            onClick={save}
+            disabled={saving}
+            className="flex-1 text-white rounded-lg py-2.5 text-sm font-medium disabled:opacity-50 min-h-[44px]"
+            style={{ background: clinicConfig.primaryColor }}
+          >
+            {saving ? 'Guardando...' : 'Guardar'}
+          </button>
+          <button
+            onClick={remove}
+            className="px-4 py-2.5 border rounded-lg text-sm min-h-[44px]"
+            style={{ borderColor: '#E2E8F0', color: '#EF4444' }}
+          >
+            Eliminar
+          </button>
         </div>
       </div>
-      <div className="p-4 border-t flex gap-2" style={{ borderColor: '#E2E8F0' }}>
-        <button
-          onClick={save}
-          disabled={saving}
-          className="flex-1 text-white rounded-lg py-2 text-sm font-medium disabled:opacity-50"
-          style={{ background: clinicConfig.primaryColor }}
-        >
-          {saving ? 'Guardando...' : 'Guardar'}
-        </button>
-        <button
-          onClick={remove}
-          className="px-3 py-2 border rounded-lg text-sm"
-          style={{ borderColor: '#E2E8F0', color: '#EF4444' }}
-        >
-          Eliminar
-        </button>
-      </div>
-    </div>
+    </>
   )
 }

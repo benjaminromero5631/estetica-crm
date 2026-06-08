@@ -10,8 +10,8 @@ import { clinicConfig } from '@/lib/config'
 import { Plus } from 'lucide-react'
 
 export default function PipelinePage() {
-  const [leads, setLeads] = useState<Lead[]>([])
-  const [etapas, setEtapas] = useState<EtapaConfig[]>([])
+  const [leads, setLeads]     = useState<Lead[]>([])
+  const [etapas, setEtapas]   = useState<EtapaConfig[]>([])
   const [selected, setSelected] = useState<Lead | null>(null)
   const [showModal, setShowModal] = useState(false)
 
@@ -29,8 +29,9 @@ export default function PipelinePage() {
     <div className="flex h-screen flex-col">
       <TopBar title="Pipeline" />
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-auto p-6">
-          <div className="flex justify-end mb-4">
+        <div className="flex-1 overflow-auto p-4 md:p-6">
+          {/* Desktop "Nuevo Lead" button */}
+          <div className="hidden md:flex justify-end mb-4">
             <button
               onClick={() => setShowModal(true)}
               className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-medium"
@@ -54,6 +55,17 @@ export default function PipelinePage() {
           />
         )}
       </div>
+
+      {/* FAB — mobile only */}
+      <button
+        onClick={() => setShowModal(true)}
+        className="md:hidden fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full text-white shadow-lg flex items-center justify-center"
+        style={{ background: clinicConfig.primaryColor }}
+        aria-label="Nuevo Lead"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
+
       {showModal && (
         <NewLeadModal
           onClose={() => setShowModal(false)}
