@@ -30,11 +30,6 @@ function sameDay(a: Date, b: Date) {
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate()
 }
-function toLocalDatetimeValue(iso: string) {
-  const d = new Date(iso)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
 function toISOFromLocal(val: string) {
   return new Date(val).toISOString()
 }
@@ -53,7 +48,6 @@ export default function CalendarioPage() {
   const [month, setMonth] = useState(today.getMonth())
   const [citas, setCitas] = useState<Cita[]>([])
   const [leads, setLeads] = useState<Lead[]>([])
-  const [loading, setLoading] = useState(true)
 
   const [showModal, setShowModal]     = useState(false)
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
@@ -75,10 +69,8 @@ export default function CalendarioPage() {
   const [form, setForm] = useState<FormState>(defaultForm)
 
   const fetchCitas = useCallback(async () => {
-    setLoading(true)
     const res = await fetch('/api/citas')
     if (res.ok) setCitas(await res.json())
-    setLoading(false)
   }, [])
 
   const fetchLeads = useCallback(async () => {

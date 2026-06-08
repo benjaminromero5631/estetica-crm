@@ -20,7 +20,7 @@ export async function GET() {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  const flat = (data ?? []).map(({ leads, ...c }: any) => ({
+  const flat = (data ?? []).map(({ leads, ...c }: { leads: { nombre: string; telefono: string; servicio_interes: string } | null; [key: string]: unknown }) => ({
     ...c,
     nombre: leads?.nombre ?? null,
     telefono: leads?.telefono ?? null,
