@@ -159,7 +159,15 @@ export default function CalendarioPage() {
   const totalCells    = Math.ceil((firstDayOfWeek + daysInMonth) / 7) * 7
 
   function citasForDay(d: Date): Cita[] {
-    return citas.filter(c => sameDay(new Date(c.fecha_inicio), d))
+    return citas.filter(c => c.fecha_inicio && sameDay(new Date(c.fecha_inicio), d))
+  }
+
+  function citaLabel(c: Cita): string {
+    const hora = c.fecha_inicio
+      ? new Date(c.fecha_inicio).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
+      : c.hora_inicio ?? ''
+    const quienEs = c.nombre ?? 'Sin lead'
+    return `${hora} ${quienEs}`
   }
 
   // Week days for mobile view
@@ -230,7 +238,7 @@ export default function CalendarioPage() {
                           className="text-xs px-1.5 py-0.5 rounded text-white truncate"
                           style={{ background: ESTADO_COLORS[c.estado] ?? '#6366f1', maxWidth: 88 }}
                         >
-                          {new Date(c.fecha_inicio).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
+                          {citaLabel(c)}
                         </div>
                       ))}
                       {dayCitas.length > 2 && (
@@ -327,9 +335,9 @@ export default function CalendarioPage() {
                               onClick={e => { e.stopPropagation(); setDetailCita(c) }}
                               className="text-xs px-2 py-0.5 rounded text-white truncate cursor-pointer hover:opacity-80 transition-opacity"
                               style={{ background: ESTADO_COLORS[c.estado] ?? '#6366f1' }}
-                              title={c.titulo}
+                              title={c.nombre ?? c.titulo ?? 'Cita'}
                             >
-                              {new Date(c.fecha_inicio).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })} {c.titulo}
+                              {citaLabel(c)}
                             </div>
                           ))}
                           {dayCitas.length > 3 && (
@@ -471,7 +479,9 @@ export default function CalendarioPage() {
                   >
                     {detailCita.estado}
                   </span>
-                  <h3 className="text-lg font-semibold text-slate-800">{detailCita.titulo}</h3>
+                  <h3 className="text-lg font-semibold text-slate-800">
+                    {detailCita.nombre ?? detailCita.titulo ?? 'Cita'}
+                  </h3>
                 </div>
                 <button
                   onClick={() => setDetailCita(null)}
@@ -482,28 +492,52 @@ export default function CalendarioPage() {
               </div>
 
               <div className="space-y-3 text-sm text-slate-600">
+                {/* Fecha y hora */}
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                  <span>
-                    {new Date(detailCita.fecha_inicio).toLocaleString('es-CL', {
-                      weekday: 'long', day: 'numeric', month: 'long',
-                      hour: '2-digit', minute: '2-digit'
-                    })}
-                    {' - '}
-                    {new Date(detailCita.fecha_fin).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
+                  {detailCita.fecha_inicio ? (
+                    <span>
+                      {new Date(detailCita.fecha_inicio).toLocaleString('es-CL', {
+                        weekday: 'long', day: 'numeric', month: 'long',
+                        hour: '2-digit', minute: '2-digit'
+                      })}
+                      {detailCita.fecha_fin && ` - ${new Date(detailCita.fecha_fin).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}`}
+                    </span>
+                  ) : (
+                    <span>{detailCita.fecha} · {detailCita.hora_inicio} - {detailCita.hora_fin}</span>
+                  )}
                 </div>
 
-                {detailCita.nombre && (
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                    <span>{detailCita.nombre} {detailCita.telefono && `· ${detailCita.telefono}`}</span>
-                  </div>
-                )}
+                {/* Lead */}
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                  <span>
+                    {detailCita.nombre ?? 'Lead sin asignar'}
+                    {detailCita.telefono && ` · ${detailCita.telefono}`}
+                  </span>
+                </div>
 
                 {detailCita.servicio_interes && (
                   <div className="text-xs text-slate-400 ml-6">{detailCita.servicio_interes}</div>
                 )}
+
+                {/* Profesional */}
+                {detailCita.nombre_profesional && (
+                  <div className="flex items-center gap-2">
+                    <span className="w-4 h-4 text-slate-400 flex-shrink-0 text-center text-xs">👤</span>
+                    <span>Profesional: {detailCita.nombre_profesional}</span>
+                  </div>
+                )}
+
+                {/* Pago */}
+                <div className="flex items-center gap-2">
+                  <span className="w-4 h-4 flex-shrink-0 text-center text-xs">
+                    {detailCita.pago_confirmado ? '✅' : '⏳'}
+                  </span>
+                  <span className={detailCita.pago_confirmado ? 'text-green-600 font-medium' : 'text-slate-400'}>
+                    {detailCita.pago_confirmado ? 'Pago confirmado' : 'Pago pendiente'}
+                  </span>
+                </div>
 
                 {detailCita.notas && (
                   <div className="bg-slate-50 rounded-lg p-3 text-sm text-slate-600 mt-2">

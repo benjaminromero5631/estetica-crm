@@ -14,18 +14,41 @@ export async function GET() {
     .from('citas')
     .select(`
       *,
-      leads (nombre, telefono, servicio_interes)
+      leads (nombre, telefono, servicio_interes),
+      profesionales (nombre)
     `)
-    .order('fecha_inicio', { ascending: true })
+    .order('fecha_inicio', { ascending: true, nullsFirst: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  const flat = (data ?? []).map(({ leads, ...c }: { leads: { nombre: string; telefono: string; servicio_interes: string } | null; [key: string]: unknown }) => ({
-    ...c,
-    nombre: leads?.nombre ?? null,
-    telefono: leads?.telefono ?? null,
-    servicio_interes: leads?.servicio_interes ?? null,
-  }))
+  type RawCita = {
+    leads: { nombre: string; telefono: string; servicio_interes: string } | null
+    profesionales: { nombre: string } | null
+    fecha: string | null
+    hora_inicio: string | null
+    hora_fin: string | null
+    fecha_inicio: string | null
+    fecha_fin: string | null
+    [key: string]: unknown
+  }
+
+  const flat = (data ?? []).map(({ leads, profesionales, fecha, hora_inicio, hora_fin, fecha_inicio, fecha_fin, ...c }: RawCita) => {
+    // Citas desde /agendar usan fecha+hora_inicio/hora_fin; citas del CRM usan fecha_inicio/fecha_fin
+    const fi = fecha_inicio ?? (fecha && hora_inicio ? `${fecha}T${hora_inicio}` : null)
+    const ff = fecha_fin   ?? (fecha && hora_fin    ? `${fecha}T${hora_fin}`    : null)
+    return {
+      ...c,
+      fecha,
+      hora_inicio,
+      hora_fin,
+      fecha_inicio: fi,
+      fecha_fin:    ff,
+      nombre:           leads?.nombre         ?? null,
+      telefono:         leads?.telefono        ?? null,
+      servicio_interes: leads?.servicio_interes ?? null,
+      nombre_profesional: profesionales?.nombre ?? null,
+    }
+  })
 
   return NextResponse.json(flat)
 }

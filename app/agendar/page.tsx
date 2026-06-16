@@ -175,6 +175,7 @@ export default function AgendarPage() {
       const profesional_id = profesionales[0].id
 
       const { error: iErr } = await supabase.from('citas').insert({
+        titulo: 'Reserva online',
         fecha: selectedDate,
         hora_inicio: selectedSlot.inicio,
         hora_fin: selectedSlot.fin,
