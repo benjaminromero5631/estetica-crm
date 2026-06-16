@@ -58,9 +58,8 @@ export default function CalendarioPage() {
   const [leads, setLeads] = useState<Lead[]>([])
   const [weekStart, setWeekStart] = useState(() => startOfWeek(today))
 
-  const [showModal, setShowModal]     = useState(false)
-  const [selectedDay, setSelectedDay] = useState<string | null>(null)
-  const [detailCita, setDetailCita]   = useState<Cita | null>(null)
+  const [showModal, setShowModal]   = useState(false)
+  const [detailCita, setDetailCita] = useState<Cita | null>(null)
   const [saving, setSaving]           = useState(false)
 
   const todayStr = padDate(today.getFullYear(), today.getMonth(), today.getDate())
@@ -98,7 +97,6 @@ export default function CalendarioPage() {
   }
 
   function openNewCita(fecha: string) {
-    setSelectedDay(fecha)
     setForm(defaultForm(fecha))
     setShowModal(true)
   }
