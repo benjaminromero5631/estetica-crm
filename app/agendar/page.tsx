@@ -180,17 +180,20 @@ export default function AgendarPage() {
         hora_fin: selectedSlot.fin,
         pago_confirmado: false,
         profesional_id,
-        titulo: 'Reserva online',
-        fecha_inicio: `${selectedDate}T${selectedSlot.inicio}:00`,
-        fecha_fin: `${selectedDate}T${selectedSlot.fin}:00`,
         estado: 'pendiente',
       })
 
-      if (iErr) throw iErr
+      if (iErr) {
+        console.error('Supabase insert error:', iErr)
+        setError(`Error Supabase: ${iErr.message} (code: ${iErr.code})`)
+        setConfirming(false)
+        return
+      }
 
       router.push('/gracias')
-    } catch {
-      setError('Error al confirmar la cita. Intenta de nuevo.')
+    } catch (err) {
+      console.error('Error inesperado:', err)
+      setError(`Error inesperado: ${err instanceof Error ? err.message : JSON.stringify(err)}`)
       setConfirming(false)
     }
   }
