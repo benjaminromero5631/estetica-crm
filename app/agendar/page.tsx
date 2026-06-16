@@ -13,11 +13,6 @@ interface HorarioDisponible {
   duracion_bloque: number
 }
 
-interface Cita {
-  hora_inicio: string
-  hora_fin: string
-}
-
 // ── helpers ──────────────────────────────────────────────────
 function toMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number)
@@ -133,13 +128,12 @@ export default function AgendarPage() {
 
       const { data: citas, error: cErr } = await supabase
         .from('citas')
-        .select('hora_inicio, hora_fin')
+        .select('hora_inicio')
         .eq('fecha', dateStr)
-        .eq('pago_confirmado', true)
 
       if (cErr) throw cErr
 
-      const ocupados = new Set((citas || []).map((c: Cita) => c.hora_inicio))
+      const ocupados = new Set((citas || []).map((c: { hora_inicio: string }) => c.hora_inicio))
 
       const allSlots = horarios.flatMap((h: HorarioDisponible) => generateSlots(h))
       const available = allSlots.filter(s => !ocupados.has(s.inicio))
