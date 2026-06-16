@@ -19,15 +19,12 @@ export interface Lead {
 export interface Cita {
   id: string
   lead_id: string | null
-  titulo: string | null
-  fecha_inicio: string | null
-  fecha_fin: string | null
-  // campos de citas desde /agendar
-  fecha?: string | null
-  hora_inicio?: string | null
-  hora_fin?: string | null
-  pago_confirmado?: boolean | null
   profesional_id?: string | null
+  titulo: string | null
+  fecha: string           // 'YYYY-MM-DD'
+  hora_inicio: string     // 'HH:MM'
+  hora_fin: string        // 'HH:MM'
+  pago_confirmado: boolean
   notas?: string | null
   estado: 'pendiente' | 'completada' | 'cancelada'
   created_at: string

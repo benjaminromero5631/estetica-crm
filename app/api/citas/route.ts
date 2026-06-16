@@ -13,40 +13,35 @@ export async function GET() {
   const { data, error } = await supabase
     .from('citas')
     .select(`
-      *,
-      leads (nombre, telefono, servicio_interes),
-      profesionales (nombre)
-    `)
-    .order('fecha_inicio', { ascending: true, nullsFirst: false })
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  type RawCita = {
-    leads: { nombre: string; telefono: string; servicio_interes: string } | null
-    profesionales: { nombre: string } | null
-    fecha: string | null
-    hora_inicio: string | null
-    hora_fin: string | null
-    fecha_inicio: string | null
-    fecha_fin: string | null
-    [key: string]: unknown
-  }
-
-  const flat = (data ?? []).map(({ leads, profesionales, fecha, hora_inicio, hora_fin, fecha_inicio, fecha_fin, ...c }: RawCita) => {
-    // Citas desde /agendar usan fecha+hora_inicio/hora_fin; citas del CRM usan fecha_inicio/fecha_fin
-    const fi = fecha_inicio ?? (fecha && hora_inicio ? `${fecha}T${hora_inicio}` : null)
-    const ff = fecha_fin   ?? (fecha && hora_fin    ? `${fecha}T${hora_fin}`    : null)
-    return {
-      ...c,
+      id,
       fecha,
       hora_inicio,
       hora_fin,
-      fecha_inicio: fi,
-      fecha_fin:    ff,
-      nombre:           leads?.nombre         ?? null,
-      telefono:         leads?.telefono        ?? null,
-      servicio_interes: leads?.servicio_interes ?? null,
-      nombre_profesional: profesionales?.nombre ?? null,
+      estado,
+      pago_confirmado,
+      titulo,
+      notas,
+      lead_id,
+      profesional_id,
+      created_at,
+      updated_at,
+      leads (nombre, telefono, servicio_interes),
+      profesionales (nombre)
+    `)
+    .order('fecha', { ascending: true })
+    .order('hora_inicio', { ascending: true })
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const flat = (data ?? []).map((row: any) => {
+    const { leads, profesionales, ...c } = row
+    return {
+      ...c,
+      nombre:             leads?.nombre             ?? null,
+      telefono:           leads?.telefono            ?? null,
+      servicio_interes:   leads?.servicio_interes    ?? null,
+      nombre_profesional: profesionales?.nombre      ?? null,
     }
   })
 
@@ -56,11 +51,20 @@ export async function GET() {
 export async function POST(request: Request) {
   const supabase = serviceClient()
   const body = await request.json()
-  const { lead_id, titulo, fecha_inicio, fecha_fin, notas } = body
+  const { lead_id, titulo, fecha, hora_inicio, hora_fin, notas } = body
 
   const { data, error } = await supabase
     .from('citas')
-    .insert([{ lead_id: lead_id || null, titulo, fecha_inicio, fecha_fin, notas: notas || null }])
+    .insert([{
+      lead_id: lead_id || null,
+      titulo,
+      fecha,
+      hora_inicio,
+      hora_fin,
+      notas: notas || null,
+      estado: 'pendiente',
+      pago_confirmado: false,
+    }])
     .select()
     .single()
 
@@ -69,7 +73,7 @@ export async function POST(request: Request) {
   if (lead_id) {
     await supabase
       .from('leads')
-      .update({ fecha_cita: fecha_inicio, etapa: 'cita_agendada', updated_at: new Date().toISOString() })
+      .update({ etapa: 'cita_agendada', updated_at: new Date().toISOString() })
       .eq('id', lead_id)
   }
 

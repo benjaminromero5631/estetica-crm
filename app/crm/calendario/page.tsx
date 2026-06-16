@@ -25,13 +25,8 @@ function getDaysInMonth(year: number, month: number) {
 function getFirstDayOfWeek(year: number, month: number) {
   return new Date(year, month, 1).getDay()
 }
-function sameDay(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-}
-function toISOFromLocal(val: string) {
-  return new Date(val).toISOString()
+function padDate(year: number, month: number, day: number): string {
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
 function startOfWeek(d: Date): Date {
   const date = new Date(d)
@@ -39,12 +34,19 @@ function startOfWeek(d: Date): Date {
   date.setHours(0, 0, 0, 0)
   return date
 }
+function formatHora(hora: string): string {
+  const [h, m] = hora.split(':')
+  const hour = parseInt(h)
+  const ampm = hour >= 12 ? 'PM' : 'AM'
+  return `${hour % 12 || 12}:${m} ${ampm}`
+}
 
 interface FormState {
   lead_id: string
   titulo: string
-  fecha_inicio: string
-  fecha_fin: string
+  fecha: string
+  hora_inicio: string
+  hora_fin: string
   notas: string
 }
 
@@ -54,27 +56,19 @@ export default function CalendarioPage() {
   const [month, setMonth] = useState(today.getMonth())
   const [citas, setCitas] = useState<Cita[]>([])
   const [leads, setLeads] = useState<Lead[]>([])
-  // Week view state (mobile)
   const [weekStart, setWeekStart] = useState(() => startOfWeek(today))
 
   const [showModal, setShowModal]     = useState(false)
-  const [selectedDay, setSelectedDay] = useState<Date | null>(null)
+  const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const [detailCita, setDetailCita]   = useState<Cita | null>(null)
   const [saving, setSaving]           = useState(false)
 
-  const defaultForm = (): FormState => {
-    const base = selectedDay ?? today
-    const pad = (n: number) => String(n).padStart(2, '0')
-    const dateStr = `${base.getFullYear()}-${pad(base.getMonth()+1)}-${pad(base.getDate())}`
-    return {
-      lead_id: '',
-      titulo: '',
-      fecha_inicio: `${dateStr}T10:00`,
-      fecha_fin: `${dateStr}T11:00`,
-      notas: '',
-    }
+  const todayStr = padDate(today.getFullYear(), today.getMonth(), today.getDate())
+
+  function defaultForm(fecha: string): FormState {
+    return { lead_id: '', titulo: '', fecha, hora_inicio: '10:00', hora_fin: '11:00', notas: '' }
   }
-  const [form, setForm] = useState<FormState>(defaultForm)
+  const [form, setForm] = useState<FormState>(() => defaultForm(todayStr))
 
   const fetchCitas = useCallback(async () => {
     const res = await fetch('/api/citas')
@@ -103,27 +97,25 @@ export default function CalendarioPage() {
     setWeekStart(d => { const nd = new Date(d); nd.setDate(d.getDate() + 7); return nd })
   }
 
-  function openNewCita(day: Date) {
-    setSelectedDay(day)
-    const pad = (n: number) => String(n).padStart(2, '0')
-    const dateStr = `${day.getFullYear()}-${pad(day.getMonth()+1)}-${pad(day.getDate())}`
-    setForm({ lead_id: '', titulo: '', fecha_inicio: `${dateStr}T10:00`, fecha_fin: `${dateStr}T11:00`, notas: '' })
+  function openNewCita(fecha: string) {
+    setSelectedDay(fecha)
+    setForm(defaultForm(fecha))
     setShowModal(true)
   }
 
   async function handleSave() {
-    if (!form.titulo.trim()) { toast.error('El titulo es requerido'); return }
-    if (!form.fecha_inicio || !form.fecha_fin) { toast.error('Las fechas son requeridas'); return }
+    if (!form.titulo.trim()) { toast.error('El título es requerido'); return }
     setSaving(true)
     const res = await fetch('/api/citas', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        lead_id: form.lead_id || null,
-        titulo: form.titulo,
-        fecha_inicio: toISOFromLocal(form.fecha_inicio),
-        fecha_fin: toISOFromLocal(form.fecha_fin),
-        notas: form.notas || null,
+        lead_id:    form.lead_id || null,
+        titulo:     form.titulo,
+        fecha:      form.fecha,
+        hora_inicio: form.hora_inicio,
+        hora_fin:    form.hora_fin,
+        notas:      form.notas || null,
       }),
     })
     setSaving(false)
@@ -154,23 +146,18 @@ export default function CalendarioPage() {
     fetchCitas()
   }
 
-  const daysInMonth   = getDaysInMonth(year, month)
-  const firstDayOfWeek = getFirstDayOfWeek(year, month)
-  const totalCells    = Math.ceil((firstDayOfWeek + daysInMonth) / 7) * 7
-
-  function citasForDay(d: Date): Cita[] {
-    return citas.filter(c => c.fecha_inicio && sameDay(new Date(c.fecha_inicio), d))
+  function citasForDate(fecha: string): Cita[] {
+    return citas.filter(c => c.fecha === fecha)
   }
 
   function citaLabel(c: Cita): string {
-    const hora = c.fecha_inicio
-      ? new Date(c.fecha_inicio).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
-      : c.hora_inicio ?? ''
-    const quienEs = c.nombre ?? 'Sin lead'
-    return `${hora} ${quienEs}`
+    return `${formatHora(c.hora_inicio)} ${c.nombre ?? c.titulo ?? 'Cita'}`
   }
 
-  // Week days for mobile view
+  const daysInMonth    = getDaysInMonth(year, month)
+  const firstDayOfWeek = getFirstDayOfWeek(year, month)
+  const totalCells     = Math.ceil((firstDayOfWeek + daysInMonth) / 7) * 7
+
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekStart)
     d.setDate(weekStart.getDate() + i)
@@ -185,7 +172,6 @@ export default function CalendarioPage() {
 
         {/* ── MOBILE: Week view ── */}
         <div className="md:hidden">
-          {/* Week nav header */}
           <div className="flex items-center justify-between mb-4">
             <button onClick={prevWeek} className="p-2 rounded-lg hover:bg-white transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
               <ChevronLeft className="w-5 h-5 text-slate-600" />
@@ -198,16 +184,16 @@ export default function CalendarioPage() {
             </button>
           </div>
 
-          {/* Week row — horizontal scroll */}
           <div className="overflow-x-auto">
             <div className="flex gap-2 min-w-max pb-2">
               {weekDays.map((day) => {
-                const isToday = sameDay(day, today)
-                const dayCitas = citasForDay(day)
+                const fechaStr = padDate(day.getFullYear(), day.getMonth(), day.getDate())
+                const isToday  = fechaStr === todayStr
+                const dayCitas = citasForDate(fechaStr)
                 return (
                   <div
-                    key={day.toISOString()}
-                    onClick={() => openNewCita(day)}
+                    key={fechaStr}
+                    onClick={() => openNewCita(fechaStr)}
                     className="flex flex-col rounded-xl bg-white border cursor-pointer"
                     style={{
                       borderColor: isToday ? clinicConfig.primaryColor : '#E2E8F0',
@@ -216,7 +202,6 @@ export default function CalendarioPage() {
                       minHeight: 120,
                     }}
                   >
-                    {/* Day header */}
                     <div className="px-3 pt-2 pb-1">
                       <p className="text-xs font-semibold" style={{ color: '#94A3B8' }}>{DAYS[day.getDay()]}</p>
                       <span
@@ -229,7 +214,6 @@ export default function CalendarioPage() {
                         {day.getDate()}
                       </span>
                     </div>
-                    {/* Citas */}
                     <div className="px-2 pb-2 space-y-1 flex-1">
                       {dayCitas.slice(0, 2).map(c => (
                         <div
@@ -238,7 +222,7 @@ export default function CalendarioPage() {
                           className="text-xs px-1.5 py-0.5 rounded text-white truncate"
                           style={{ background: ESTADO_COLORS[c.estado] ?? '#6366f1', maxWidth: 88 }}
                         >
-                          {citaLabel(c)}
+                          {formatHora(c.hora_inicio)}
                         </div>
                       ))}
                       {dayCitas.length > 2 && (
@@ -251,9 +235,8 @@ export default function CalendarioPage() {
             </div>
           </div>
 
-          {/* Nueva cita button on mobile */}
           <button
-            onClick={() => openNewCita(today)}
+            onClick={() => openNewCita(todayStr)}
             className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium text-white min-h-[44px]"
             style={{ background: clinicConfig.primaryColor }}
           >
@@ -264,7 +247,6 @@ export default function CalendarioPage() {
 
         {/* ── DESKTOP: Month view ── */}
         <div className="hidden md:block">
-          {/* Header nav */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <button onClick={prevMonth} className="p-2 rounded-lg hover:bg-white transition-colors">
@@ -278,7 +260,7 @@ export default function CalendarioPage() {
               </button>
             </div>
             <button
-              onClick={() => openNewCita(today)}
+              onClick={() => openNewCita(todayStr)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
               style={{ background: clinicConfig.primaryColor }}
             >
@@ -287,7 +269,6 @@ export default function CalendarioPage() {
             </button>
           </div>
 
-          {/* Grid */}
           <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
             <div className="grid grid-cols-7">
               {DAYS.map(d => (
@@ -301,14 +282,14 @@ export default function CalendarioPage() {
               {Array.from({ length: totalCells }).map((_, idx) => {
                 const dayNum = idx - firstDayOfWeek + 1
                 const isCurrentMonth = dayNum >= 1 && dayNum <= daysInMonth
-                const cellDate = isCurrentMonth ? new Date(year, month, dayNum) : null
-                const isToday = cellDate ? sameDay(cellDate, today) : false
-                const dayCitas = cellDate ? citasForDay(cellDate) : []
+                const fechaStr = isCurrentMonth ? padDate(year, month, dayNum) : null
+                const isToday  = fechaStr === todayStr
+                const dayCitas = fechaStr ? citasForDate(fechaStr) : []
 
                 return (
                   <div
                     key={idx}
-                    onClick={() => isCurrentMonth && openNewCita(new Date(year, month, dayNum))}
+                    onClick={() => fechaStr && openNewCita(fechaStr)}
                     className="relative min-h-[110px] p-2 transition-colors"
                     style={{
                       borderBottom: '1px solid #F1F5F9',
@@ -317,7 +298,7 @@ export default function CalendarioPage() {
                       cursor: isCurrentMonth ? 'pointer' : 'default',
                     }}
                   >
-                    {isCurrentMonth && (
+                    {isCurrentMonth && fechaStr && (
                       <>
                         <span
                           className="inline-flex items-center justify-center w-7 h-7 rounded-full text-sm font-medium mb-1"
@@ -341,7 +322,7 @@ export default function CalendarioPage() {
                             </div>
                           ))}
                           {dayCitas.length > 3 && (
-                            <span className="text-xs text-slate-400 pl-1">+{dayCitas.length - 3} mas</span>
+                            <span className="text-xs text-slate-400 pl-1">+{dayCitas.length - 3} más</span>
                           )}
                         </div>
                       </>
@@ -352,7 +333,6 @@ export default function CalendarioPage() {
             </div>
           </div>
 
-          {/* Legend */}
           <div className="flex items-center gap-4 mt-4">
             {Object.entries(ESTADO_COLORS).map(([estado, color]) => (
               <div key={estado} className="flex items-center gap-1.5">
@@ -364,24 +344,21 @@ export default function CalendarioPage() {
         </div>
       </div>
 
-      {/* New cita modal — bottom sheet on mobile, centered on desktop */}
+      {/* Modal nueva cita */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-t-2xl md:rounded-2xl shadow-xl w-full md:max-w-md md:mx-4 overflow-y-auto max-h-[90vh]">
             <div className="p-6">
               <div className="flex items-center justify-between mb-5">
                 <h3 className="text-lg font-semibold text-slate-800">Nueva cita</h3>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="text-slate-400 hover:text-slate-600 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                >
+                <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 min-w-[44px] min-h-[44px] flex items-center justify-center">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Titulo *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Título *</label>
                   <input
                     className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 min-h-[44px]"
                     style={{ '--tw-ring-color': clinicConfig.primaryColor } as React.CSSProperties}
@@ -412,23 +389,33 @@ export default function CalendarioPage() {
                   </select>
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Fecha *</label>
+                  <input
+                    type="date"
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none min-h-[44px]"
+                    value={form.fecha}
+                    onChange={e => setForm(f => ({ ...f, fecha: e.target.value }))}
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Inicio *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Hora inicio *</label>
                     <input
-                      type="datetime-local"
+                      type="time"
                       className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none min-h-[44px]"
-                      value={form.fecha_inicio}
-                      onChange={e => setForm(f => ({ ...f, fecha_inicio: e.target.value }))}
+                      value={form.hora_inicio}
+                      onChange={e => setForm(f => ({ ...f, hora_inicio: e.target.value }))}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Fin *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Hora fin *</label>
                     <input
-                      type="datetime-local"
+                      type="time"
                       className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none min-h-[44px]"
-                      value={form.fecha_fin}
-                      onChange={e => setForm(f => ({ ...f, fecha_fin: e.target.value }))}
+                      value={form.hora_fin}
+                      onChange={e => setForm(f => ({ ...f, hora_fin: e.target.value }))}
                     />
                   </div>
                 </div>
@@ -466,7 +453,7 @@ export default function CalendarioPage() {
         </div>
       )}
 
-      {/* Cita detail — bottom sheet on mobile, centered on desktop */}
+      {/* Panel detalle cita */}
       {detailCita && (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-t-2xl md:rounded-2xl shadow-xl w-full md:max-w-sm md:mx-4 overflow-y-auto max-h-[90vh]">
@@ -492,23 +479,17 @@ export default function CalendarioPage() {
               </div>
 
               <div className="space-y-3 text-sm text-slate-600">
-                {/* Fecha y hora */}
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                  {detailCita.fecha_inicio ? (
-                    <span>
-                      {new Date(detailCita.fecha_inicio).toLocaleString('es-CL', {
-                        weekday: 'long', day: 'numeric', month: 'long',
-                        hour: '2-digit', minute: '2-digit'
-                      })}
-                      {detailCita.fecha_fin && ` - ${new Date(detailCita.fecha_fin).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}`}
-                    </span>
-                  ) : (
-                    <span>{detailCita.fecha} · {detailCita.hora_inicio} - {detailCita.hora_fin}</span>
-                  )}
+                  <span>
+                    {new Date(detailCita.fecha + 'T00:00:00').toLocaleDateString('es-CL', {
+                      weekday: 'long', day: 'numeric', month: 'long'
+                    })}
+                    {' · '}
+                    {formatHora(detailCita.hora_inicio)} – {formatHora(detailCita.hora_fin)}
+                  </span>
                 </div>
 
-                {/* Lead */}
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
                   <span>
@@ -521,17 +502,15 @@ export default function CalendarioPage() {
                   <div className="text-xs text-slate-400 ml-6">{detailCita.servicio_interes}</div>
                 )}
 
-                {/* Profesional */}
                 {detailCita.nombre_profesional && (
                   <div className="flex items-center gap-2">
-                    <span className="w-4 h-4 text-slate-400 flex-shrink-0 text-center text-xs">👤</span>
+                    <span className="w-4 text-center text-xs flex-shrink-0">👤</span>
                     <span>Profesional: {detailCita.nombre_profesional}</span>
                   </div>
                 )}
 
-                {/* Pago */}
                 <div className="flex items-center gap-2">
-                  <span className="w-4 h-4 flex-shrink-0 text-center text-xs">
+                  <span className="w-4 text-center text-xs flex-shrink-0">
                     {detailCita.pago_confirmado ? '✅' : '⏳'}
                   </span>
                   <span className={detailCita.pago_confirmado ? 'text-green-600 font-medium' : 'text-slate-400'}>
