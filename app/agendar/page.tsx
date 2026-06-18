@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 
 // ── types ────────────────────────────────────────────────────
@@ -61,8 +61,10 @@ const MONTHS = [
 ]
 
 // ── component ────────────────────────────────────────────────
-export default function AgendarPage() {
+function AgendarInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const leadId = searchParams.get('lead_id')
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -176,6 +178,7 @@ export default function AgendarPage() {
         pago_confirmado: false,
         profesional_id,
         estado: 'pendiente',
+        lead_id: leadId || null,
       })
 
       if (iErr) {
@@ -329,5 +332,13 @@ export default function AgendarPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function AgendarPage() {
+  return (
+    <Suspense fallback={null}>
+      <AgendarInner />
+    </Suspense>
   )
 }
