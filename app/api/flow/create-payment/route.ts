@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     email,
     subject:         `Reserva ${clinicConfig.mainService}`,
     urlConfirmation: `${baseUrl}/api/flow/confirm`,
-    urlReturn:       `${baseUrl}/gracias`,
+    urlReturn:       `${baseUrl}/api/flow/return`,
   }
 
   params.s = sign(params, secret)
