@@ -170,16 +170,20 @@ function AgendarInner() {
 
       const profesional_id = profesionales[0].id
 
-      const { error: iErr } = await supabase.from('citas').insert({
-        titulo: 'Reserva online',
-        fecha: selectedDate,
-        hora_inicio: selectedSlot.inicio,
-        hora_fin: selectedSlot.fin,
-        pago_confirmado: false,
-        profesional_id,
-        estado: 'pendiente',
-        lead_id: leadId || null,
-      })
+      const { data: citaData, error: iErr } = await supabase
+        .from('citas')
+        .insert({
+          titulo: 'Reserva online',
+          fecha: selectedDate,
+          hora_inicio: selectedSlot.inicio,
+          hora_fin: selectedSlot.fin,
+          pago_confirmado: false,
+          profesional_id,
+          estado: 'pendiente',
+          lead_id: leadId || null,
+        })
+        .select('id')
+        .single()
 
       if (iErr) {
         console.error('Supabase insert error:', iErr)
@@ -199,7 +203,20 @@ function AgendarInner() {
         }
       }
 
-      router.push('/gracias')
+      const flowRes = await fetch('/api/flow/create-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ citaId: citaData.id }),
+      })
+
+      if (!flowRes.ok) {
+        setError('No se pudo iniciar el pago. Intenta de nuevo.')
+        setConfirming(false)
+        return
+      }
+
+      const { redirectUrl } = await flowRes.json()
+      window.location.href = redirectUrl
     } catch (err) {
       console.error('Error inesperado:', err)
       setError(`Error inesperado: ${err instanceof Error ? err.message : JSON.stringify(err)}`)

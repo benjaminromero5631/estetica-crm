@@ -59,6 +59,9 @@ export const clinicConfig = {
     },
   ],
 
+  // Monto que paga el lead al momento de reservar (cobrado via Flow)
+  depositoReserva: 15000, // CLP — editable por clinica
+
   // Zeltra performance fee per reserva
   zeltraFeePerReserva: 15000, // CLP
 
