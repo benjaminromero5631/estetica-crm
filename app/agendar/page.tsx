@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 
 // ── types ────────────────────────────────────────────────────
@@ -62,7 +62,6 @@ const MONTHS = [
 
 // ── component ────────────────────────────────────────────────
 function AgendarInner() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const leadId = searchParams.get('lead_id')
   const today = new Date()
