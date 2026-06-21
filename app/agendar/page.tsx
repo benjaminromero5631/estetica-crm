@@ -188,6 +188,17 @@ function AgendarInner() {
         return
       }
 
+      if (leadId) {
+        const { error: uErr } = await supabase
+          .from('leads')
+          .update({ etapa: 'cita_agendada' })
+          .eq('id', leadId)
+
+        if (uErr) {
+          console.error('Error actualizando etapa del lead:', uErr)
+        }
+      }
+
       router.push('/gracias')
     } catch (err) {
       console.error('Error inesperado:', err)
