@@ -1,9 +1,11 @@
-import { createClient } from '@/lib/supabase-server'
+import { serviceClient } from '@/lib/supabase-service'
 import TopBar from '@/components/layout/TopBar'
 import CEODashboard from '@/components/crm/CEODashboard'
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
-  const supabase = createClient()
+  const supabase = serviceClient()
 
   const [{ data: metricas }, { data: leads }] = await Promise.all([
     supabase.rpc('get_metricas'),
