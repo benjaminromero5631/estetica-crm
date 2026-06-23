@@ -1,6 +1,6 @@
-import crypto from 'crypto'
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { getPaymentStatus } from '@/lib/flow'
 
 function serviceClient() {
   return createClient(
@@ -9,28 +9,15 @@ function serviceClient() {
   )
 }
 
-function sign(params: Record<string, string>, secret: string): string {
-  const msg = Object.keys(params).sort().map(k => k + params[k]).join('')
-  return crypto.createHmac('sha256', secret).update(msg).digest('hex')
-}
-
 export async function POST(request: Request) {
   const formData = await request.formData()
   const token = formData.get('token') as string | null
 
   if (!token) return new NextResponse('token requerido', { status: 400 })
 
-  const apiKey = process.env.FLOW_API_KEY!
-  const secret = process.env.FLOW_SECRET_KEY!
+  const { ok, data: status } = await getPaymentStatus(token)
 
-  const params: Record<string, string> = { apiKey, token }
-  params.s = sign(params, secret)
-
-  const qs = new URLSearchParams(params)
-  const res = await fetch(`${process.env.FLOW_API_URL}/payment/getStatus?${qs.toString()}`)
-  const status = await res.json()
-
-  if (!res.ok) {
+  if (!ok) {
     console.error('Flow getStatus error:', status)
     return new NextResponse('Error consultando estado', { status: 502 })
   }
