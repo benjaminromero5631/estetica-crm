@@ -1,5 +1,6 @@
 import { serviceClient } from '@/lib/supabase-service'
 import { NextResponse } from 'next/server'
+import { clinicConfig } from '@/lib/config'
 
 function isLastDayOfMonth(): boolean {
   const now = new Date()
@@ -10,7 +11,17 @@ function isLastDayOfMonth(): boolean {
 
 async function runSnapshot() {
   const supabase = serviceClient()
-  const { data, error } = await supabase.rpc('guardar_snapshot_mensual')
+
+  const { data: metricas, error: metErr } = await supabase.rpc('get_metricas')
+  if (metErr) return NextResponse.json({ error: metErr.message }, { status: 500 })
+
+  const performanceZeltra =
+    ((metricas as Record<string, number>)?.convertidos_este_mes ?? 0) *
+    clinicConfig.zeltraFeePerReserva
+
+  const { data, error } = await supabase.rpc('guardar_snapshot_mensual', {
+    p_performance_zeltra: performanceZeltra,
+  })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true, snapshot: data })
 }
