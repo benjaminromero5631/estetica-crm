@@ -11,6 +11,7 @@ function GraciasInner() {
   const [retryError, setRetryError] = useState<string | null>(null)
 
   const isSuccess = status === 'success'
+  const isRejected = status === 'rejected'
 
   async function reintentar() {
     if (!citaId) return
@@ -48,6 +49,41 @@ function GraciasInner() {
             className="inline-block mt-4 px-5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm font-medium text-zinc-300 hover:text-white transition-colors border border-zinc-700"
           >
             Agendar otra cita
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  if (isRejected) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-white flex flex-col items-center justify-center px-4">
+        <div className="w-full max-w-sm text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-red-600/20 border border-red-500/30 flex items-center justify-center mx-auto text-3xl">
+            ✕
+          </div>
+          <h1 className="text-2xl font-semibold tracking-tight">Pago rechazado</h1>
+          <p className="text-zinc-400 text-sm leading-relaxed">
+            Tu pago fue rechazado por el banco. Verifica los datos de tu tarjeta
+            o intenta con otro medio de pago.
+          </p>
+          {retryError && (
+            <p className="text-red-400 text-sm">{retryError}</p>
+          )}
+          {citaId && (
+            <button
+              onClick={reintentar}
+              disabled={retrying}
+              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed rounded-xl text-sm font-semibold transition-colors"
+            >
+              {retrying ? 'Redirigiendo a pago...' : 'Reintentar pago'}
+            </button>
+          )}
+          <a
+            href="/agendar"
+            className="inline-block px-5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm font-medium text-zinc-300 hover:text-white transition-colors border border-zinc-700"
+          >
+            Volver al inicio
           </a>
         </div>
       </div>

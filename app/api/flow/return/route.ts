@@ -22,6 +22,13 @@ export async function POST(request: Request) {
     return NextResponse.redirect(`${baseUrl}/gracias?status=success`, { status: 303 })
   }
 
+  if (status.status === 3) {
+    return NextResponse.redirect(
+      `${baseUrl}/gracias?status=rejected&citaId=${status.commerceOrder}`,
+      { status: 303 }
+    )
+  }
+
   return NextResponse.redirect(
     `${baseUrl}/gracias?status=unconfirmed&citaId=${status.commerceOrder}`,
     { status: 303 }
