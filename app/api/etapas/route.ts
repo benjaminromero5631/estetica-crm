@@ -1,8 +1,8 @@
-import { createClient } from '@/lib/supabase-server'
+import { serviceClient } from '@/lib/supabase-service'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
-  const supabase = createClient()
+  const supabase = serviceClient()
   const { data, error } = await supabase
     .from('etapas_config')
     .select('*')

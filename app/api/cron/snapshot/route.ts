@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase-server'
+import { serviceClient } from '@/lib/supabase-service'
 import { NextResponse } from 'next/server'
 
 function isLastDayOfMonth(): boolean {
@@ -9,7 +9,7 @@ function isLastDayOfMonth(): boolean {
 }
 
 async function runSnapshot() {
-  const supabase = createClient()
+  const supabase = serviceClient()
   const { data, error } = await supabase.rpc('guardar_snapshot_mensual')
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true, snapshot: data })

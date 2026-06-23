@@ -1,8 +1,8 @@
-import { createClient } from '@/lib/supabase-server'
+import { serviceClient } from '@/lib/supabase-service'
 import { NextResponse } from 'next/server'
 
 export async function GET(_: Request, { params }: { params: { id: string } }) {
-  const supabase = createClient()
+  const supabase = serviceClient()
   const { data, error } = await supabase
     .from('leads')
     .select('*')
@@ -14,7 +14,7 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
 }
 
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
-  const supabase = createClient()
+  const supabase = serviceClient()
   const body = await request.json()
 
   const { data, error } = await supabase
@@ -29,7 +29,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 }
 
 export async function DELETE(_: Request, { params }: { params: { id: string } }) {
-  const supabase = createClient()
+  const supabase = serviceClient()
   const { error } = await supabase.from('leads').delete().eq('id', params.id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
