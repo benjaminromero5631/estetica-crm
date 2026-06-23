@@ -1,4 +1,6 @@
-import { createClient } from '@/lib/supabase-server'
+import { serviceClient } from '@/lib/supabase-service'
+
+export const dynamic = 'force-dynamic'
 import TopBar from '@/components/layout/TopBar'
 import { formatCLP } from '@/lib/format'
 
@@ -47,7 +49,7 @@ function Td({ children, right }: { children: React.ReactNode; right?: boolean })
 }
 
 export default async function MetricasPage() {
-  const supabase = createClient()
+  const supabase = serviceClient()
   const { data: metricas } = await supabase.rpc('get_metricas')
   const m = metricas as Metricas | null
 

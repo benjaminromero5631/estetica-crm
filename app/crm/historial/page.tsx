@@ -1,4 +1,6 @@
-import { createClient } from '@/lib/supabase-server'
+import { serviceClient } from '@/lib/supabase-service'
+
+export const dynamic = 'force-dynamic'
 import TopBar from '@/components/layout/TopBar'
 import { formatCLP } from '@/lib/format'
 import HistorialClient from './HistorialClient'
@@ -18,7 +20,7 @@ export interface MetricaMensual {
 }
 
 export default async function HistorialPage() {
-  const supabase = createClient()
+  const supabase = serviceClient()
 
   const [{ data: historial }, { data: metricas }] = await Promise.all([
     supabase
