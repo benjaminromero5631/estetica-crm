@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   // status 2 = pagado en Flow
   if (status.status === 2) {
     const supabase = serviceClient()
-    const { error } = await supabase
+    const { data: citaData, error } = await supabase
       .from('citas')
       .update({
         pago_confirmado: true,
@@ -46,10 +46,21 @@ export async function POST(request: Request) {
         estado:          'confirmada',
       })
       .eq('id', status.commerceOrder)
+      .select('lead_id')
+      .single()
 
     if (error) {
       console.error('Supabase update error:', error)
       return new NextResponse('Error actualizando cita', { status: 500 })
+    }
+
+    if (citaData?.lead_id) {
+      const { error: leadErr } = await supabase
+        .from('leads')
+        .update({ etapa: 'reserva_con_deposito' })
+        .eq('id', citaData.lead_id)
+
+      if (leadErr) console.error('Error actualizando etapa del lead:', leadErr)
     }
   }
 
