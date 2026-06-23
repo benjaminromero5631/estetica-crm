@@ -10,13 +10,12 @@ function serviceClient() {
 }
 
 export async function GET() {
-  const supabase = createAnonClient()
+  const supabase = serviceClient()
   const { data, error } = await supabase
     .from('leads')
     .select('*')
     .order('created_at', { ascending: false })
 
-  console.log('Leads query result:', { data, error, count: data?.length })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }
