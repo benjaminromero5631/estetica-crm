@@ -51,7 +51,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const supabase = serviceClient()
   const body = await request.json()
-  const { lead_id, titulo, fecha, hora_inicio, hora_fin, notas } = body
+  const { lead_id, titulo, fecha, hora_inicio, hora_fin, notas, profesional_id } = body
 
   const { data, error } = await supabase
     .from('citas')
@@ -64,6 +64,7 @@ export async function POST(request: Request) {
       notas: notas || null,
       estado: 'pendiente',
       pago_confirmado: false,
+      profesional_id: profesional_id || null,
     }])
     .select()
     .single()

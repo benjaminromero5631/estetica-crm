@@ -2,39 +2,6 @@
 
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase'
-
-// ── types ────────────────────────────────────────────────────
-interface HorarioDisponible {
-  id: string
-  dia_semana: number
-  hora_inicio: string
-  hora_fin: string
-  duracion_bloque: number
-}
-
-// ── helpers ──────────────────────────────────────────────────
-function toMinutes(time: string): number {
-  const [h, m] = time.split(':').map(Number)
-  return h * 60 + m
-}
-
-function fromMinutes(min: number): string {
-  const h = Math.floor(min / 60)
-  const m = min % 60
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-}
-
-function generateSlots(horario: HorarioDisponible): { inicio: string; fin: string }[] {
-  const start = toMinutes(horario.hora_inicio)
-  const end = toMinutes(horario.hora_fin)
-  const step = horario.duracion_bloque
-  const slots = []
-  for (let t = start; t + step <= end; t += step) {
-    slots.push({ inicio: fromMinutes(t), fin: fromMinutes(t + step) })
-  }
-  return slots
-}
 
 function isoDate(year: number, month: number, day: number): string {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
@@ -71,6 +38,7 @@ function AgendarInner() {
   const [viewMonth, setViewMonth] = useState(today.getMonth())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [slots, setSlots] = useState<{ inicio: string; fin: string }[]>([])
+  const [profesionalId, setProfesionalId] = useState<string | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<{ inicio: string; fin: string } | null>(null)
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [confirming, setConfirming] = useState(false)
@@ -105,40 +73,16 @@ function AgendarInner() {
     setSelectedDate(dateStr)
     setSelectedSlot(null)
     setSlots([])
+    setProfesionalId(null)
     setError(null)
     setLoadingSlots(true)
 
     try {
-      const supabase = createClient()
-      const date = new Date(viewYear, viewMonth, day)
-      const dayOfWeek = date.getDay()
-
-      const { data: horarios, error: hErr } = await supabase
-        .from('horarios_disponibles')
-        .select('*')
-        .eq('dia_semana', dayOfWeek)
-        .eq('activo', true)
-
-      if (hErr) throw hErr
-
-      if (!horarios || horarios.length === 0) {
-        setSlots([])
-        setLoadingSlots(false)
-        return
-      }
-
-      const { data: citas, error: cErr } = await supabase
-        .from('citas')
-        .select('hora_inicio')
-        .eq('fecha', dateStr)
-
-      if (cErr) throw cErr
-
-      const ocupados = new Set((citas || []).map((c: { hora_inicio: string }) => c.hora_inicio))
-
-      const allSlots = horarios.flatMap((h: HorarioDisponible) => generateSlots(h))
-      const available = allSlots.filter(s => !ocupados.has(s.inicio))
+      const res = await fetch(`/api/disponibilidad?fecha=${dateStr}`)
+      if (!res.ok) throw new Error('Error consultando disponibilidad')
+      const { slots: available, profesional_id } = await res.json()
       setSlots(available)
+      setProfesionalId(profesional_id)
     } catch {
       setError('No se pudieron cargar los horarios. Intenta de nuevo.')
     } finally {
@@ -152,55 +96,33 @@ function AgendarInner() {
     setError(null)
 
     try {
-      const supabase = createClient()
-
-      const { data: profesionales, error: pErr } = await supabase
-        .from('profesionales')
-        .select('id')
-        .eq('activo', true)
-        .limit(1)
-
-      if (pErr) throw pErr
-      if (!profesionales || profesionales.length === 0) {
+      if (!profesionalId) {
         setError('No hay profesionales disponibles en este momento.')
         setConfirming(false)
         return
       }
 
-      const profesional_id = profesionales[0].id
+      const citaRes = await fetch('/api/citas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          titulo:        'Reserva online',
+          fecha:         selectedDate,
+          hora_inicio:   selectedSlot.inicio,
+          hora_fin:      selectedSlot.fin,
+          profesional_id: profesionalId,
+          lead_id:       leadId || null,
+        }),
+      })
 
-      const { data: citaData, error: iErr } = await supabase
-        .from('citas')
-        .insert({
-          titulo: 'Reserva online',
-          fecha: selectedDate,
-          hora_inicio: selectedSlot.inicio,
-          hora_fin: selectedSlot.fin,
-          pago_confirmado: false,
-          profesional_id,
-          estado: 'pendiente',
-          lead_id: leadId || null,
-        })
-        .select('id')
-        .single()
-
-      if (iErr) {
-        console.error('Supabase insert error:', iErr)
-        setError(`Error Supabase: ${iErr.message} (code: ${iErr.code})`)
+      if (!citaRes.ok) {
+        const { error: msg } = await citaRes.json().catch(() => ({ error: 'Error desconocido' }))
+        setError(`Error al crear la cita: ${msg}`)
         setConfirming(false)
         return
       }
 
-      if (leadId) {
-        const { error: uErr } = await supabase
-          .from('leads')
-          .update({ etapa: 'cita_agendada' })
-          .eq('id', leadId)
-
-        if (uErr) {
-          console.error('Error actualizando etapa del lead:', uErr)
-        }
-      }
+      const citaData = await citaRes.json()
 
       const flowRes = await fetch('/api/flow/create-payment', {
         method: 'POST',
