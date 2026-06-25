@@ -1,15 +1,13 @@
-import { createClient } from '@supabase/supabase-js'
+import { serviceClient } from '@/lib/supabase-service'
+import { createCita } from '@/lib/citas'
 import { NextResponse } from 'next/server'
 
-function serviceClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+function svcClient() {
+  return serviceClient()
 }
 
 export async function GET() {
-  const supabase = serviceClient()
+  const supabase = svcClient()
   const { data, error } = await supabase
     .from('citas')
     .select(`
@@ -49,34 +47,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const supabase = serviceClient()
   const body = await request.json()
-  const { lead_id, titulo, fecha, hora_inicio, hora_fin, notas, profesional_id } = body
-
-  const { data, error } = await supabase
-    .from('citas')
-    .insert([{
-      lead_id: lead_id || null,
-      titulo,
-      fecha,
-      hora_inicio,
-      hora_fin,
-      notas: notas || null,
-      estado: 'pendiente',
-      pago_confirmado: false,
-      profesional_id: profesional_id || null,
-    }])
-    .select()
-    .single()
-
+  const { data, error } = await createCita(body)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  if (lead_id) {
-    await supabase
-      .from('leads')
-      .update({ etapa: 'cita_agendada', updated_at: new Date().toISOString() })
-      .eq('id', lead_id)
-  }
-
   return NextResponse.json(data, { status: 201 })
 }

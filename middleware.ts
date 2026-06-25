@@ -29,7 +29,9 @@ export async function middleware(request: NextRequest) {
 
   const isProtected =
     pathname.startsWith('/crm') ||
-    (pathname.startsWith('/api') && !pathname.startsWith('/api/flow'))
+    (pathname.startsWith('/api') &&
+      !pathname.startsWith('/api/flow') &&
+      !pathname.startsWith('/api/public'))
 
   if (isProtected && !session) {
     const loginUrl = request.nextUrl.clone()

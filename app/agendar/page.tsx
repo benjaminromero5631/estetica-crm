@@ -78,7 +78,7 @@ function AgendarInner() {
     setLoadingSlots(true)
 
     try {
-      const res = await fetch(`/api/disponibilidad?fecha=${dateStr}`)
+      const res = await fetch(`/api/public/disponibilidad?fecha=${dateStr}`)
       if (!res.ok) throw new Error('Error consultando disponibilidad')
       const { slots: available, profesional_id } = await res.json()
       setSlots(available)
@@ -102,7 +102,7 @@ function AgendarInner() {
         return
       }
 
-      const citaRes = await fetch('/api/citas', {
+      const citaRes = await fetch('/api/public/citas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

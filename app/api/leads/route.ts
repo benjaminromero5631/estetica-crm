@@ -1,12 +1,6 @@
-import { createClient } from '@supabase/supabase-js'
+import { serviceClient } from '@/lib/supabase-service'
+import { createLead } from '@/lib/leads'
 import { NextResponse } from 'next/server'
-
-function serviceClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
 
 export async function GET() {
   const supabase = serviceClient()
@@ -20,27 +14,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const supabase = serviceClient()
   const body = await request.json()
-
-  const { nombre, telefono, email, servicio_interes, fuente, notas, etapa, valor_estimado, ultima_vez_clinica } = body
-
-  const { data, error } = await supabase
-    .from('leads')
-    .insert([{
-      nombre,
-      telefono,
-      email: email || null,
-      servicio_interes: servicio_interes || null,
-      fuente: fuente || null,
-      notas: notas || null,
-      etapa: etapa ?? 'nuevo',
-      valor_estimado: valor_estimado || null,
-      ultima_vez_clinica: ultima_vez_clinica || null,
-    }])
-    .select()
-    .single()
-
+  const { data, error } = await createLead(body)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data, { status: 201 })
 }
