@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Users, GitBranch, BarChart2, History, LogOut, Sparkles, CalendarDays } from 'lucide-react'
+import { LayoutDashboard, Users, GitBranch, BarChart2, History, LogOut, Sparkles, CalendarDays, Clock } from 'lucide-react'
 import { clinicConfig } from '@/lib/config'
 import { createClient } from '@/lib/supabase'
 import { useState } from 'react'
@@ -16,6 +16,7 @@ const navItems = [
   { href: '/crm/metricas',   label: 'Métricas',   icon: BarChart2 },
   { href: '/crm/historial',  label: 'Historial',  icon: History },
   { href: '/crm/calendario', label: 'Calendario', icon: CalendarDays },
+  { href: '/crm/horarios',   label: 'Horarios',   icon: Clock },
 ]
 
 export default function Sidebar() {
