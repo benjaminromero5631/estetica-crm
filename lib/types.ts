@@ -38,6 +38,24 @@ export interface Cita {
   nombre_profesional?: string | null
 }
 
+export interface HorarioDisponible {
+  id: string
+  profesional_id: string
+  dia_semana: number      // 0=domingo, 1=lunes, ..., 6=sabado
+  hora_inicio: string     // 'HH:MM'
+  hora_fin: string        // 'HH:MM'
+  duracion_bloque: number
+  activo: boolean
+}
+
+export interface BloqueoHorario {
+  id: string
+  profesional_id: string
+  fecha: string            // 'YYYY-MM-DD'
+  motivo: string | null
+  created_at: string
+}
+
 export interface EtapaConfig {
   id: string
   nombre: string
