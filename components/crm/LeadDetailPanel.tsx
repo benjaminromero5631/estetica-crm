@@ -61,7 +61,7 @@ export default function LeadDetailPanel({ lead, etapas, onClose, onUpdate, onDel
         className="
           fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-xl flex flex-col
           h-[85vh]
-          md:static md:h-auto md:min-h-screen md:w-80 md:rounded-none md:rounded-tl-none md:border-l
+          md:static md:h-full md:w-80 md:rounded-none md:rounded-tl-none md:border-l
         "
         style={{ borderColor: '#E2E8F0' }}
       >
