@@ -33,7 +33,10 @@ export async function DELETE(_: Request, { params }: { params: { id: string } })
     .eq('id', params.id)
     .single()
 
-  const { error } = await supabase.from('citas').delete().eq('id', params.id)
+  const { error } = await supabase
+    .from('citas')
+    .update({ eliminado_at: new Date().toISOString() })
+    .eq('id', params.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   if (cita?.lead_id) {

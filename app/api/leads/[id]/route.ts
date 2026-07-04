@@ -30,7 +30,10 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 
 export async function DELETE(_: Request, { params }: { params: { id: string } }) {
   const supabase = serviceClient()
-  const { error } = await supabase.from('leads').delete().eq('id', params.id)
+  const { error } = await supabase
+    .from('leads')
+    .update({ eliminado_at: new Date().toISOString() })
+    .eq('id', params.id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return new NextResponse(null, { status: 204 })

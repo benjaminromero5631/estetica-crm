@@ -12,6 +12,7 @@ export interface Lead {
   deposito_pagado?: boolean
   fecha_cita?: string | null
   ultima_vez_clinica?: string | null
+  lead_num?: number | null
   created_at: string
   updated_at: string
 }

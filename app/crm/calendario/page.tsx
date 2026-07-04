@@ -6,6 +6,7 @@ import TopBar from '@/components/layout/TopBar'
 import { Cita, Lead } from '@/lib/types'
 import { toast } from 'sonner'
 import { clinicConfig } from '@/lib/config'
+import ConfirmModal from '@/components/crm/ConfirmModal'
 
 const DAYS   = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']
 const MONTHS = [
@@ -61,6 +62,8 @@ export default function CalendarioPage() {
   const [showModal, setShowModal]   = useState(false)
   const [detailCita, setDetailCita] = useState<Cita | null>(null)
   const [saving, setSaving]           = useState(false)
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const todayStr = padDate(today.getFullYear(), today.getMonth(), today.getDate())
 
@@ -136,8 +139,10 @@ export default function CalendarioPage() {
   }
 
   async function handleDelete(cita: Cita) {
-    if (!confirm('¿Eliminar esta cita?')) return
+    setDeleting(true)
     const res = await fetch(`/api/citas/${cita.id}`, { method: 'DELETE' })
+    setDeleting(false)
+    setShowConfirmDelete(false)
     if (!res.ok) { toast.error('Error al eliminar'); return }
     toast.success('Cita eliminada')
     setDetailCita(null)
@@ -540,7 +545,7 @@ export default function CalendarioPage() {
               </div>
 
               <button
-                onClick={() => handleDelete(detailCita)}
+                onClick={() => setShowConfirmDelete(true)}
                 className="flex items-center justify-center gap-2 w-full mt-3 py-2.5 text-xs text-red-500 hover:bg-red-50 rounded-lg transition-colors min-h-[44px]"
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -549,6 +554,16 @@ export default function CalendarioPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showConfirmDelete && detailCita && (
+        <ConfirmModal
+          titulo="Eliminar cita"
+          mensaje="¿Eliminar esta cita? Podrás recuperarla desde la base de datos si fue un error."
+          confirmando={deleting}
+          onConfirm={() => handleDelete(detailCita)}
+          onCancel={() => setShowConfirmDelete(false)}
+        />
       )}
     </div>
   )

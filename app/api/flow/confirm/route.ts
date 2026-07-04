@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { getPaymentStatus } from '@/lib/flow'
+import { sendPurchaseEvent } from '@/lib/meta-capi'
 
 function serviceClient() {
   return createClient(
@@ -42,12 +43,22 @@ export async function POST(request: Request) {
     }
 
     if (citaData?.lead_id) {
-      const { error: leadErr } = await supabase
+      const { data: lead, error: leadErr } = await supabase
         .from('leads')
         .update({ etapa: 'reserva_con_deposito' })
         .eq('id', citaData.lead_id)
+        .select('telefono, email, valor_estimado')
+        .single()
 
       if (leadErr) console.error('Error actualizando etapa del lead:', leadErr)
+
+      if (lead?.valor_estimado != null) {
+        sendPurchaseEvent({
+          value: lead.valor_estimado,
+          telefono: lead.telefono,
+          email: lead.email,
+        }).catch((err) => console.error('Error enviando evento a Meta CAPI:', err))
+      }
     }
   }
 

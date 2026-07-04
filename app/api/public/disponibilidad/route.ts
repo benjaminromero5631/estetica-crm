@@ -73,7 +73,8 @@ export async function GET(request: Request) {
       supabase
         .from('citas')
         .select('hora_inicio')
-        .eq('fecha', fecha),
+        .eq('fecha', fecha)
+        .is('eliminado_at', null),
     ])
 
   if (bErr) return NextResponse.json({ error: bErr.message }, { status: 500 })
