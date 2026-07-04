@@ -42,32 +42,52 @@ export async function GET(request: Request) {
 
   const supabase = serviceClient()
 
-  const [{ data: horarios, error: hErr }, { data: citas, error: cErr }, { data: profesionales, error: pErr }] =
+  const { data: profesionales, error: pErr } = await supabase
+    .from('profesionales')
+    .select('id')
+    .eq('activo', true)
+    .limit(1)
+
+  if (pErr) return NextResponse.json({ error: pErr.message }, { status: 500 })
+
+  const profesional_id = profesionales?.[0]?.id ?? null
+
+  if (!profesional_id) {
+    return NextResponse.json({ slots: [], profesional_id: null })
+  }
+
+  const [{ data: bloqueo, error: bErr }, { data: horarios, error: hErr }, { data: citas, error: cErr }] =
     await Promise.all([
+      supabase
+        .from('bloqueos_horario')
+        .select('id')
+        .eq('profesional_id', profesional_id)
+        .eq('fecha', fecha)
+        .maybeSingle(),
       supabase
         .from('horarios_disponibles')
         .select('hora_inicio, hora_fin, duracion_bloque')
+        .eq('profesional_id', profesional_id)
         .eq('dia_semana', dayOfWeek)
         .eq('activo', true),
       supabase
         .from('citas')
         .select('hora_inicio')
-        .eq('fecha', fecha),
-      supabase
-        .from('profesionales')
-        .select('id')
-        .eq('activo', true)
-        .limit(1),
+        .eq('fecha', fecha)
+        .is('eliminado_at', null),
     ])
 
+  if (bErr) return NextResponse.json({ error: bErr.message }, { status: 500 })
   if (hErr) return NextResponse.json({ error: hErr.message }, { status: 500 })
   if (cErr) return NextResponse.json({ error: cErr.message }, { status: 500 })
-  if (pErr) return NextResponse.json({ error: pErr.message }, { status: 500 })
+
+  if (bloqueo) {
+    return NextResponse.json({ slots: [], profesional_id })
+  }
 
   const ocupados = new Set((citas ?? []).map((c: { hora_inicio: string }) => c.hora_inicio))
   const allSlots = (horarios ?? []).flatMap((h: HorarioRow) => generateSlots(h))
   const slots = allSlots.filter(s => !ocupados.has(s.inicio))
-  const profesional_id = profesionales?.[0]?.id ?? null
 
   return NextResponse.json({ slots, profesional_id })
 }

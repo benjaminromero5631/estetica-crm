@@ -7,6 +7,7 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import ConfirmModal from './ConfirmModal'
 
 interface Props {
   lead: Lead
@@ -20,6 +21,8 @@ export default function LeadDetailPanel({ lead, etapas, onClose, onUpdate, onDel
   const [notas, setNotas] = useState(lead.notas ?? '')
   const [etapa, setEtapa] = useState(lead.etapa)
   const [saving, setSaving] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   async function save() {
     setSaving(true)
@@ -36,8 +39,10 @@ export default function LeadDetailPanel({ lead, etapas, onClose, onUpdate, onDel
   }
 
   async function remove() {
-    if (!confirm(`Eliminar lead ${lead.nombre}?`)) return
+    setDeleting(true)
     await fetch(`/api/leads/${lead.id}`, { method: 'DELETE' })
+    setDeleting(false)
+    setShowConfirm(false)
     onDelete(lead.id)
     onClose()
     toast.success('Lead eliminado')
@@ -66,7 +71,14 @@ export default function LeadDetailPanel({ lead, etapas, onClose, onUpdate, onDel
         </div>
 
         <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: '#E2E8F0' }}>
-          <h2 className="font-semibold truncate" style={{ color: '#1F2937' }}>{lead.nombre}</h2>
+          <h2 className="font-semibold truncate" style={{ color: '#1F2937' }}>
+            {lead.nombre}
+            {lead.lead_num != null && (
+              <span className="ml-2 text-xs font-normal" style={{ color: '#9CA3AF' }}>
+                Paciente #{lead.lead_num}
+              </span>
+            )}
+          </h2>
           <button
             onClick={onClose}
             style={{ color: '#94A3B8' }}
@@ -150,7 +162,7 @@ export default function LeadDetailPanel({ lead, etapas, onClose, onUpdate, onDel
             {saving ? 'Guardando...' : 'Guardar'}
           </button>
           <button
-            onClick={remove}
+            onClick={() => setShowConfirm(true)}
             className="px-4 py-2.5 border rounded-lg text-sm min-h-[44px]"
             style={{ borderColor: '#E2E8F0', color: '#EF4444' }}
           >
@@ -158,6 +170,16 @@ export default function LeadDetailPanel({ lead, etapas, onClose, onUpdate, onDel
           </button>
         </div>
       </div>
+
+      {showConfirm && (
+        <ConfirmModal
+          titulo="Eliminar lead"
+          mensaje={`¿Eliminar el lead de ${lead.nombre}? Podrás recuperarlo desde la base de datos si fue un error.`}
+          confirmando={deleting}
+          onConfirm={remove}
+          onCancel={() => setShowConfirm(false)}
+        />
+      )}
     </>
   )
 }

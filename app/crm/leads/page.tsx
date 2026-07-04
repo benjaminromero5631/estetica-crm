@@ -93,7 +93,14 @@ export default function LeadsPage() {
                         className="border-b last:border-0 cursor-pointer hover:bg-blue-50 transition-colors"
                         style={{ borderColor: '#F1F5F9' }}
                       >
-                        <td className="px-4 py-3 font-medium" style={{ color: '#1F2937' }}>{lead.nombre}</td>
+                        <td className="px-4 py-3 font-medium" style={{ color: '#1F2937' }}>
+                          {lead.nombre}
+                          {lead.lead_num != null && (
+                            <span className="ml-2 text-xs font-normal" style={{ color: '#9CA3AF' }}>
+                              Paciente #{lead.lead_num}
+                            </span>
+                          )}
+                        </td>
                         <td className="hidden md:table-cell px-4 py-3" style={{ color: '#4B5563' }}>{lead.telefono}</td>
                         <td className="px-4 py-3 text-xs" style={{ color: '#6B7280' }}>{lead.servicio_interes ?? '-'}</td>
                         <td className="px-4 py-3">

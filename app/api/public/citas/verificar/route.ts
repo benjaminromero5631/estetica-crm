@@ -18,6 +18,7 @@ export async function GET(request: Request) {
     .from('citas')
     .select('id, fecha, hora_inicio, estado')
     .eq('lead_id', lead_id)
+    .is('eliminado_at', null)
     .limit(1)
     .maybeSingle()
 
