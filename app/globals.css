@@ -22,6 +22,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+input, textarea, select {
+  color: #0F172A;
+  background-color: #FFFFFF;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

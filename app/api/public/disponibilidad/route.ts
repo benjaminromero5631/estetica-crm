@@ -52,7 +52,8 @@ export async function GET(request: Request) {
       supabase
         .from('citas')
         .select('hora_inicio')
-        .eq('fecha', fecha),
+        .eq('fecha', fecha)
+        .is('eliminado_at', null),
       supabase
         .from('profesionales')
         .select('id')

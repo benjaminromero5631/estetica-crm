@@ -26,6 +26,7 @@ export async function GET() {
       leads (nombre, telefono, servicio_interes),
       profesionales (nombre)
     `)
+    .is('eliminado_at', null)
     .order('fecha', { ascending: true })
     .order('hora_inicio', { ascending: true })
 
