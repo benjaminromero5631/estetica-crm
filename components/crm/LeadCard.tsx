@@ -8,9 +8,18 @@ import { CheckCircle, MessageCircle } from 'lucide-react'
 import { formatDistanceToNow, differenceInDays } from 'date-fns'
 import { es } from 'date-fns/locale'
 
-export default function LeadCard({ lead, onClick }: { lead: Lead; onClick: (l: Lead) => void }) {
+interface Props {
+  lead: Lead
+  onClick: (l: Lead) => void
+  selectionMode?: boolean
+  selected?: boolean
+  onToggleSelect?: (id: string) => void
+}
+
+export default function LeadCard({ lead, onClick, selectionMode, selected, onToggleSelect }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: lead.id,
+    disabled: selectionMode,
   })
 
   const isReserva  = lead.etapa === 'reserva_con_deposito'
@@ -29,14 +38,25 @@ export default function LeadCard({ lead, onClick }: { lead: Lead; onClick: (l: L
         borderColor: isReserva ? '#10b981' : isStuck ? '#f59e0b' : '#E2E8F0',
         borderWidth: isReserva || isStuck ? 2 : 1,
       }}
-      {...attributes}
-      {...listeners}
-      onClick={() => onClick(lead)}
+      {...(selectionMode ? {} : attributes)}
+      {...(selectionMode ? {} : listeners)}
+      onClick={() => selectionMode ? onToggleSelect?.(lead.id) : onClick(lead)}
       className="bg-white rounded-lg border p-3 cursor-pointer hover:shadow-md transition-shadow"
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-1">
-        <p className="font-medium text-sm truncate" style={{ color: '#1F2937' }}>{lead.nombre}</p>
+        <div className="flex items-center gap-2 min-w-0">
+          {selectionMode && (
+            <input
+              type="checkbox"
+              checked={!!selected}
+              onChange={() => onToggleSelect?.(lead.id)}
+              onClick={(e) => e.stopPropagation()}
+              className="flex-shrink-0"
+            />
+          )}
+          <p className="font-medium text-sm truncate" style={{ color: '#1F2937' }}>{lead.nombre}</p>
+        </div>
         {isReserva && (
           <CheckCircle className="w-4 h-4 flex-shrink-0 text-emerald-500" />
         )}

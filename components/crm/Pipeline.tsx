@@ -16,7 +16,16 @@ import { clinicConfig } from '@/lib/config'
 import LeadCard from './LeadCard'
 import { toast } from 'sonner'
 
-function Column({ etapa, leads, onCardClick }: { etapa: EtapaConfig; leads: Lead[]; onCardClick: (l: Lead) => void }) {
+interface ColumnProps {
+  etapa: EtapaConfig
+  leads: Lead[]
+  onCardClick: (l: Lead) => void
+  selectionMode: boolean
+  selectedIds: Set<string>
+  onToggleSelect: (id: string) => void
+}
+
+function Column({ etapa, leads, onCardClick, selectionMode, selectedIds, onToggleSelect }: ColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: etapa.slug })
   return (
     <div className="flex flex-col flex-shrink-0 w-[280px]">
@@ -40,7 +49,14 @@ function Column({ etapa, leads, onCardClick }: { etapa: EtapaConfig; leads: Lead
       >
         <SortableContext items={leads.map((l) => l.id)} strategy={verticalListSortingStrategy}>
           {leads.map((lead) => (
-            <LeadCard key={lead.id} lead={lead} onClick={onCardClick} />
+            <LeadCard
+              key={lead.id}
+              lead={lead}
+              onClick={onCardClick}
+              selectionMode={selectionMode}
+              selected={selectedIds.has(lead.id)}
+              onToggleSelect={onToggleSelect}
+            />
           ))}
         </SortableContext>
 
@@ -61,9 +77,19 @@ interface Props {
   initialLeads: Lead[]
   etapas: EtapaConfig[]
   onLeadClick: (l: Lead) => void
+  selectionMode?: boolean
+  selectedIds?: Set<string>
+  onToggleSelect?: (id: string) => void
 }
 
-export default function Pipeline({ initialLeads, etapas, onLeadClick }: Props) {
+export default function Pipeline({
+  initialLeads,
+  etapas,
+  onLeadClick,
+  selectionMode = false,
+  selectedIds = new Set(),
+  onToggleSelect = () => {},
+}: Props) {
   const [leads, setLeads] = useState(initialLeads)
   const [showHint, setShowHint] = useState(true)
 
@@ -110,7 +136,7 @@ export default function Pipeline({ initialLeads, etapas, onLeadClick }: Props) {
           ← desliza →
         </p>
       )}
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <DndContext sensors={selectionMode ? [] : sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-4">
           {etapas.map((etapa) => (
             <Column
@@ -118,6 +144,9 @@ export default function Pipeline({ initialLeads, etapas, onLeadClick }: Props) {
               etapa={etapa}
               leads={leads.filter((l) => l.etapa === etapa.slug)}
               onCardClick={onLeadClick}
+              selectionMode={selectionMode}
+              selectedIds={selectedIds}
+              onToggleSelect={onToggleSelect}
             />
           ))}
         </div>

@@ -4,9 +4,12 @@ import { useEffect, useState } from 'react'
 import TopBar from '@/components/layout/TopBar'
 import LeadDetailPanel from '@/components/crm/LeadDetailPanel'
 import NewLeadModal from '@/components/crm/NewLeadModal'
+import BulkActionBar from '@/components/crm/BulkActionBar'
+import ConfirmModal from '@/components/crm/ConfirmModal'
 import { Lead, EtapaConfig } from '@/lib/types'
 import { clinicConfig } from '@/lib/config'
-import { Plus, Search } from 'lucide-react'
+import { Plus, Search, ListChecks } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function LeadsPage() {
   const [leads, setLeads]     = useState<Lead[]>([])
@@ -14,6 +17,10 @@ export default function LeadsPage() {
   const [search, setSearch]   = useState('')
   const [selected, setSelected] = useState<Lead | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [selectionMode, setSelectionMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [showConfirmBulk, setShowConfirmBulk] = useState(false)
+  const [bulkDeleting, setBulkDeleting] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -32,6 +39,42 @@ export default function LeadsPage() {
       (l.servicio_interes ?? '').toLowerCase().includes(search.toLowerCase())
   )
 
+  function toggleSelectionMode() {
+    setSelectionMode((prev) => !prev)
+    setSelectedIds(new Set())
+  }
+
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((prev) =>
+      prev.size === filtered.length ? new Set() : new Set(filtered.map((l) => l.id))
+    )
+  }
+
+  async function bulkDelete() {
+    setBulkDeleting(true)
+    const res = await fetch('/api/leads/bulk-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: Array.from(selectedIds) }),
+    })
+    setBulkDeleting(false)
+    setShowConfirmBulk(false)
+    if (!res.ok) { toast.error('Error al eliminar'); return }
+    setLeads((prev) => prev.filter((l) => !selectedIds.has(l.id)))
+    toast.success(`${selectedIds.size} lead(s) eliminados`)
+    setSelectedIds(new Set())
+    setSelectionMode(false)
+  }
+
   return (
     <div className="flex h-screen flex-col">
       <TopBar title="Leads" />
@@ -49,6 +92,17 @@ export default function LeadsPage() {
                 style={{ borderColor: '#E2E8F0' }}
               />
             </div>
+            <button
+              onClick={toggleSelectionMode}
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border min-h-[44px]"
+              style={
+                selectionMode
+                  ? { background: clinicConfig.primaryColor, color: 'white', borderColor: clinicConfig.primaryColor }
+                  : { borderColor: '#E2E8F0', color: '#374151' }
+              }
+            >
+              <ListChecks className="w-4 h-4" /> {selectionMode ? 'Cancelar' : 'Seleccionar'}
+            </button>
             {/* Desktop button */}
             <button
               onClick={() => setShowModal(true)}
@@ -72,6 +126,15 @@ export default function LeadsPage() {
               <table className="w-full text-sm">
                 <thead style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
                   <tr>
+                    {selectionMode && (
+                      <th className="px-4 py-3 w-10">
+                        <input
+                          type="checkbox"
+                          checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                          onChange={toggleSelectAll}
+                        />
+                      </th>
+                    )}
                     <th className="text-left px-4 py-3 text-xs font-semibold uppercase" style={{ color: '#64748B' }}>Nombre</th>
                     {/* Telefono hidden on mobile */}
                     <th className="hidden md:table-cell text-left px-4 py-3 text-xs font-semibold uppercase" style={{ color: '#64748B' }}>Telefono</th>
@@ -89,10 +152,19 @@ export default function LeadsPage() {
                     return (
                       <tr
                         key={lead.id}
-                        onClick={() => setSelected(lead)}
+                        onClick={() => selectionMode ? toggleSelected(lead.id) : setSelected(lead)}
                         className="border-b last:border-0 cursor-pointer hover:bg-blue-50 transition-colors"
                         style={{ borderColor: '#F1F5F9' }}
                       >
+                        {selectionMode && (
+                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(lead.id)}
+                              onChange={() => toggleSelected(lead.id)}
+                            />
+                          </td>
+                        )}
                         <td className="px-4 py-3 font-medium" style={{ color: '#1F2937' }}>
                           {lead.nombre}
                           {lead.lead_num != null && (
@@ -124,7 +196,7 @@ export default function LeadsPage() {
                   })}
                   {filtered.length === 0 && (
                     <tr>
-                      <td colSpan={6}>
+                      <td colSpan={selectionMode ? 7 : 6}>
                         <div className="flex flex-col items-center justify-center py-16 gap-3">
                           <div className="rounded-full p-5" style={{ background: '#EFF6FF' }}>
                             <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
@@ -173,6 +245,20 @@ export default function LeadsPage() {
         <NewLeadModal
           onClose={() => setShowModal(false)}
           onCreated={(l) => setLeads((prev) => [l, ...prev])}
+        />
+      )}
+
+      {selectedIds.size > 0 && (
+        <BulkActionBar count={selectedIds.size} onDelete={() => setShowConfirmBulk(true)} />
+      )}
+
+      {showConfirmBulk && (
+        <ConfirmModal
+          titulo="Eliminar leads"
+          mensaje={`¿Eliminar ${selectedIds.size} lead${selectedIds.size === 1 ? '' : 's'}? Esta acción es reversible solo desde la base de datos.`}
+          confirmando={bulkDeleting}
+          onConfirm={bulkDelete}
+          onCancel={() => setShowConfirmBulk(false)}
         />
       )}
     </div>
