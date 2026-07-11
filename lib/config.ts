@@ -1,4 +1,4 @@
-export const clinicConfig = {
+const defaultClinicConfig = {
   // Branding
   name: "Clinica Estetica",
   tagline: "Sistema de agendamiento Zeltra",
@@ -74,3 +74,19 @@ export const clinicConfig = {
   // Contact
   supportEmail: "soporte@zeltra.com",
 }
+
+function loadClinicConfig() {
+  const override = process.env.NEXT_PUBLIC_CRM_CLINIC_CONFIG
+
+  if (!override) {
+    return defaultClinicConfig
+  }
+
+  try {
+    return { ...defaultClinicConfig, ...JSON.parse(override) }
+  } catch {
+    return defaultClinicConfig
+  }
+}
+
+export const clinicConfig = loadClinicConfig()
