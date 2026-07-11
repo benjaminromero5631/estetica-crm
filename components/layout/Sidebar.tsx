@@ -67,13 +67,13 @@ export default function Sidebar() {
             <Image
               src={clinicConfig.logoUrl}
               alt={clinicConfig.name}
-              width={28}
-              height={28}
+              width={56}
+              height={56}
               className="rounded-lg flex-shrink-0"
               onError={() => setLogoErr(true)}
             />
           ) : (
-            <Sparkles className="w-7 h-7 flex-shrink-0" style={{ color: clinicConfig.primaryColor }} />
+            <Sparkles className="w-14 h-14 flex-shrink-0" style={{ color: clinicConfig.primaryColor }} />
           )}
           <span
             className="font-semibold text-sm tracking-tight whitespace-nowrap overflow-hidden transition-all duration-200

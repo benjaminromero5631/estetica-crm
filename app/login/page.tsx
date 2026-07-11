@@ -35,8 +35,8 @@ export default function LoginPage() {
           <Image
             src={clinicConfig.logoUrl}
             alt={clinicConfig.name}
-            width={56}
-            height={56}
+            width={96}
+            height={96}
             className="rounded-xl mb-3"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
           />
