@@ -75,7 +75,7 @@ const defaultClinicConfig = {
   supportEmail: "soporte@zeltra.com",
 }
 
-function loadClinicConfig() {
+function loadClinicConfig(): typeof defaultClinicConfig {
   const override = process.env.NEXT_PUBLIC_CRM_CLINIC_CONFIG
 
   if (!override) {
@@ -83,7 +83,8 @@ function loadClinicConfig() {
   }
 
   try {
-    return { ...defaultClinicConfig, ...JSON.parse(override) }
+    const parsed = JSON.parse(override) as Partial<typeof defaultClinicConfig>
+    return { ...defaultClinicConfig, ...parsed }
   } catch {
     return defaultClinicConfig
   }
