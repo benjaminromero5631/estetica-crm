@@ -12,6 +12,24 @@ interface CreateLeadInput {
   ultima_vez_clinica?: string | null
 }
 
+export async function getLeadByTelefono(telefono: string) {
+  const supabase = serviceClient()
+  return supabase
+    .from('leads')
+    .select('*')
+    .eq('telefono', telefono)
+}
+
+export async function updateLead(id: string, input: Partial<CreateLeadInput>) {
+  const supabase = serviceClient()
+  return supabase
+    .from('leads')
+    .update(input)
+    .eq('id', id)
+    .select()
+    .single()
+}
+
 export async function createLead(input: CreateLeadInput) {
   const supabase = serviceClient()
   return supabase
