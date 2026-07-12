@@ -60,7 +60,7 @@ export default function Sidebar() {
       >
         {/* Logo */}
         <div
-          className="flex items-center gap-2 px-6 md:px-3 lg:px-6 py-5 overflow-hidden md:group-hover:px-6"
+          className="flex items-center gap-2 px-6 md:px-3 lg:px-6 py-5 overflow-hidden min-w-0 md:group-hover:px-6"
           style={{ borderBottom: '1px solid #E2E8F0', transition: 'padding 0.2s' }}
         >
           {!logoErr ? (
@@ -76,7 +76,7 @@ export default function Sidebar() {
             <Sparkles className="w-14 h-14 flex-shrink-0" style={{ color: clinicConfig.primaryColor }} />
           )}
           <span
-            className="font-semibold text-sm tracking-tight whitespace-nowrap overflow-hidden transition-all duration-200
+            className="font-semibold text-sm tracking-tight leading-tight whitespace-normal break-words transition-all duration-200
                        max-w-xs opacity-100
                        md:max-w-0 md:opacity-0
                        lg:max-w-xs lg:opacity-100
