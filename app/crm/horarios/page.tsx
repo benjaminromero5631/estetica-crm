@@ -19,15 +19,23 @@ const DIAS = [
 
 const SEDE_DEFAULT = 'iquique'
 
-interface DiaForm {
-  dia_semana: number
-  activo: boolean
+interface BloqueForm {
   hora_inicio: string
   hora_fin: string
+  duracion_bloque: number
+}
+
+interface DiaForm {
+  dia_semana: number
+  bloques: BloqueForm[]
 }
 
 function defaultDias(): DiaForm[] {
-  return DIAS.map(d => ({ dia_semana: d.dia_semana, activo: false, hora_inicio: '09:00', hora_fin: '18:00' }))
+  return DIAS.map(d => ({ dia_semana: d.dia_semana, bloques: [] }))
+}
+
+function nuevoBloque(): BloqueForm {
+  return { hora_inicio: '09:00', hora_fin: '18:00', duracion_bloque: 60 }
 }
 
 function sedeLabel(sede: string): string {
@@ -71,9 +79,11 @@ export default function HorariosPage() {
       for (const h of json.horarios) {
         const row = base.find((d: DiaForm) => d.dia_semana === h.dia_semana)
         if (row) {
-          row.activo = true
-          row.hora_inicio = h.hora_inicio.slice(0, 5)
-          row.hora_fin = h.hora_fin.slice(0, 5)
+          row.bloques.push({
+            hora_inicio: h.hora_inicio.slice(0, 5),
+            hora_fin: h.hora_fin.slice(0, 5),
+            duracion_bloque: h.duracion_bloque,
+          })
         }
       }
       setDias(base)
@@ -106,8 +116,26 @@ export default function HorariosPage() {
     fetchViajes()
   }, [fetchViajes])
 
-  function updateDia(dia_semana: number, patch: Partial<DiaForm>) {
-    setDias(prev => prev.map(d => d.dia_semana === dia_semana ? { ...d, ...patch } : d))
+  function agregarBloqueDia(dia_semana: number) {
+    setDias(prev => prev.map(d =>
+      d.dia_semana === dia_semana ? { ...d, bloques: [...d.bloques, nuevoBloque()] } : d
+    ))
+  }
+
+  function actualizarBloqueDia(dia_semana: number, index: number, patch: Partial<BloqueForm>) {
+    setDias(prev => prev.map(d =>
+      d.dia_semana === dia_semana
+        ? { ...d, bloques: d.bloques.map((b, i) => i === index ? { ...b, ...patch } : b) }
+        : d
+    ))
+  }
+
+  function eliminarBloqueDia(dia_semana: number, index: number) {
+    setDias(prev => prev.map(d =>
+      d.dia_semana === dia_semana
+        ? { ...d, bloques: d.bloques.filter((_, i) => i !== index) }
+        : d
+    ))
   }
 
   function agregarSede() {
@@ -293,34 +321,45 @@ export default function HorariosPage() {
             {DIAS.map(({ dia_semana, label }) => {
               const row = dias.find(d => d.dia_semana === dia_semana)!
               return (
-                <div key={dia_semana} className="flex items-center gap-4 px-4 py-3">
-                  <button
-                    type="button"
-                    onClick={() => updateDia(dia_semana, { activo: !row.activo })}
-                    className="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors"
-                    style={{ background: row.activo ? clinicConfig.primaryColor : '#CBD5E1' }}
-                  >
-                    <span
-                      className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                      style={{ transform: row.activo ? 'translateX(18px)' : 'translateX(2px)' }}
-                    />
-                  </button>
-                  <span className="w-24 text-sm text-slate-700">{label}</span>
-                  <input
-                    type="time"
-                    value={row.hora_inicio}
-                    disabled={!row.activo}
-                    onChange={e => updateDia(dia_semana, { hora_inicio: e.target.value })}
-                    className="rounded border border-slate-200 px-2 py-1 text-sm disabled:opacity-40"
-                  />
-                  <span className="text-slate-400 text-sm">a</span>
-                  <input
-                    type="time"
-                    value={row.hora_fin}
-                    disabled={!row.activo}
-                    onChange={e => updateDia(dia_semana, { hora_fin: e.target.value })}
-                    className="rounded border border-slate-200 px-2 py-1 text-sm disabled:opacity-40"
-                  />
+                <div key={dia_semana} className="flex gap-4 px-4 py-3">
+                  <span className="w-24 flex-shrink-0 text-sm text-slate-700 pt-1.5">{label}</span>
+                  <div className="flex-1 space-y-2">
+                    {row.bloques.length === 0 && (
+                      <span className="block text-xs text-slate-400 pt-1.5">Dia libre</span>
+                    )}
+                    {row.bloques.map((bloque, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <input
+                          type="time"
+                          value={bloque.hora_inicio}
+                          onChange={e => actualizarBloqueDia(dia_semana, index, { hora_inicio: e.target.value })}
+                          className="rounded border border-slate-200 px-2 py-1 text-sm"
+                        />
+                        <span className="text-slate-400 text-sm">a</span>
+                        <input
+                          type="time"
+                          value={bloque.hora_fin}
+                          onChange={e => actualizarBloqueDia(dia_semana, index, { hora_fin: e.target.value })}
+                          className="rounded border border-slate-200 px-2 py-1 text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => eliminarBloqueDia(dia_semana, index)}
+                          className="text-red-500 hover:text-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => agregarBloqueDia(dia_semana)}
+                      className="flex items-center gap-1 text-xs font-medium"
+                      style={{ color: clinicConfig.primaryColor }}
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Agregar bloque
+                    </button>
+                  </div>
                 </div>
               )
             })}

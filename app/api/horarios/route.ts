@@ -43,11 +43,15 @@ export async function GET(request: Request) {
   return NextResponse.json({ error: null, profesional_id: profesionalId, horarios: data ?? [] })
 }
 
-interface DiaInput {
-  dia_semana: number
-  activo: boolean
+interface BloqueInput {
   hora_inicio: string
   hora_fin: string
+  duracion_bloque: number
+}
+
+interface DiaInput {
+  dia_semana: number
+  bloques: BloqueInput[]
 }
 
 export async function PUT(request: Request) {
@@ -64,6 +68,17 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: 'Se requieren los 7 dias de la semana' }, { status: 400 })
   }
 
+  for (const d of dias) {
+    if (!Array.isArray(d.bloques)) {
+      return NextResponse.json({ error: 'Cada dia requiere un arreglo de bloques' }, { status: 400 })
+    }
+    for (const b of d.bloques) {
+      if (!b.hora_inicio || !b.hora_fin || b.hora_fin <= b.hora_inicio) {
+        return NextResponse.json({ error: 'Cada bloque requiere hora_inicio menor a hora_fin' }, { status: 400 })
+      }
+    }
+  }
+
   const svc = serviceClient()
 
   const { error: delErr } = await svc
@@ -74,17 +89,15 @@ export async function PUT(request: Request) {
 
   if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 })
 
-  const rows = dias
-    .filter(d => d.activo)
-    .map(d => ({
-      profesional_id: profesionalId,
-      dia_semana: d.dia_semana,
-      hora_inicio: d.hora_inicio,
-      hora_fin: d.hora_fin,
-      duracion_bloque: 60,
-      activo: true,
-      sede,
-    }))
+  const rows = dias.flatMap(d => d.bloques.map(b => ({
+    profesional_id: profesionalId,
+    dia_semana: d.dia_semana,
+    hora_inicio: b.hora_inicio,
+    hora_fin: b.hora_fin,
+    duracion_bloque: b.duracion_bloque || 60,
+    activo: true,
+    sede,
+  })))
 
   if (rows.length > 0) {
     const { error: insErr } = await svc.from('horarios_disponibles').insert(rows)
