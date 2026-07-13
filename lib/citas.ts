@@ -8,6 +8,7 @@ interface CreateCitaInput {
   lead_id?: string | null
   profesional_id?: string | null
   notas?: string | null
+  sede?: string
 }
 
 export async function createCita(input: CreateCitaInput) {
@@ -25,6 +26,7 @@ export async function createCita(input: CreateCitaInput) {
       estado:          'pendiente',
       pago_confirmado: false,
       profesional_id:  input.profesional_id || null,
+      sede:            input.sede || 'iquique',
     }])
     .select()
     .single()

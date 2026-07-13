@@ -28,6 +28,7 @@ export interface Cita {
   pago_confirmado: boolean
   notas?: string | null
   estado: 'pendiente' | 'completada' | 'cancelada'
+  sede: string
   created_at: string
   updated_at: string
   // joined from leads
@@ -46,6 +47,7 @@ export interface HorarioDisponible {
   hora_fin: string        // 'HH:MM'
   duracion_bloque: number
   activo: boolean
+  sede: string
 }
 
 export interface BloqueoHorario {
@@ -53,6 +55,18 @@ export interface BloqueoHorario {
   profesional_id: string
   fecha: string            // 'YYYY-MM-DD'
   motivo: string | null
+  sede: string
+  created_at: string
+}
+
+export interface ViajeSede {
+  id: string
+  profesional_id: string
+  sede: string
+  fecha_inicio: string      // 'YYYY-MM-DD'
+  fecha_fin: string         // 'YYYY-MM-DD'
+  cupo_maximo: number
+  activo: boolean
   created_at: string
 }
 

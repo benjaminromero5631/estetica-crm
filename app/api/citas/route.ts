@@ -21,6 +21,7 @@ export async function GET() {
       notas,
       lead_id,
       profesional_id,
+      sede,
       created_at,
       updated_at,
       leads (nombre, telefono, servicio_interes),

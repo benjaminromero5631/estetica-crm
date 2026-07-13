@@ -31,6 +31,7 @@ const MONTHS = [
 function AgendarInner() {
   const searchParams = useSearchParams()
   const leadId = searchParams.get('lead_id')
+  const sede = searchParams.get('sede') || 'iquique'
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -78,7 +79,7 @@ function AgendarInner() {
     setLoadingSlots(true)
 
     try {
-      const res = await fetch(`/api/public/disponibilidad?fecha=${dateStr}`)
+      const res = await fetch(`/api/public/disponibilidad?fecha=${dateStr}&sede=${sede}`)
       if (!res.ok) throw new Error('Error consultando disponibilidad')
       const { slots: available, profesional_id } = await res.json()
       setSlots(available)
@@ -112,6 +113,7 @@ function AgendarInner() {
           hora_fin:      selectedSlot.fin,
           profesional_id: profesionalId,
           lead_id:       leadId || null,
+          sede,
         }),
       })
 

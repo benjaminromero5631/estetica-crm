@@ -20,18 +20,22 @@ async function getProfesionalId() {
   return { error: null, profesionalId: profesional.id as string }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const { error, profesionalId } = await getProfesionalId()
   if (error) {
     const status = error === 'NO_VINCULADO' ? 200 : 401
     return NextResponse.json({ error, profesional_id: null, horarios: [] }, { status })
   }
 
+  const { searchParams } = new URL(request.url)
+  const sede = searchParams.get('sede') || 'iquique'
+
   const svc = serviceClient()
   const { data, error: hErr } = await svc
     .from('horarios_disponibles')
-    .select('id, dia_semana, hora_inicio, hora_fin, duracion_bloque, activo')
+    .select('id, dia_semana, hora_inicio, hora_fin, duracion_bloque, activo, sede')
     .eq('profesional_id', profesionalId)
+    .eq('sede', sede)
     .order('dia_semana', { ascending: true })
 
   if (hErr) return NextResponse.json({ error: hErr.message }, { status: 500 })
@@ -54,6 +58,7 @@ export async function PUT(request: Request) {
 
   const body = await request.json()
   const dias: DiaInput[] = body.dias
+  const sede: string = body.sede || 'iquique'
 
   if (!Array.isArray(dias) || dias.length !== 7) {
     return NextResponse.json({ error: 'Se requieren los 7 dias de la semana' }, { status: 400 })
@@ -65,6 +70,7 @@ export async function PUT(request: Request) {
     .from('horarios_disponibles')
     .delete()
     .eq('profesional_id', profesionalId)
+    .eq('sede', sede)
 
   if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 })
 
@@ -77,6 +83,7 @@ export async function PUT(request: Request) {
       hora_fin: d.hora_fin,
       duracion_bloque: 60,
       activo: true,
+      sede,
     }))
 
   if (rows.length > 0) {

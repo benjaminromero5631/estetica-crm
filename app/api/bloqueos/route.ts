@@ -20,18 +20,22 @@ async function getProfesionalId() {
   return { error: null, profesionalId: profesional.id as string }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const { error, profesionalId } = await getProfesionalId()
   if (error) {
     const status = error === 'NO_VINCULADO' ? 200 : 401
     return NextResponse.json({ error, bloqueos: [] }, { status })
   }
 
+  const { searchParams } = new URL(request.url)
+  const sede = searchParams.get('sede') || 'iquique'
+
   const svc = serviceClient()
   const { data, error: bErr } = await svc
     .from('bloqueos_horario')
-    .select('id, fecha, motivo, created_at')
+    .select('id, fecha, motivo, sede, created_at')
     .eq('profesional_id', profesionalId)
+    .eq('sede', sede)
     .order('fecha', { ascending: true })
 
   if (bErr) return NextResponse.json({ error: bErr.message }, { status: 500 })
@@ -46,6 +50,7 @@ export async function POST(request: Request) {
   const body = await request.json()
   const fecha: string = body.fecha
   const motivo: string | null = body.motivo || null
+  const sede: string = body.sede || 'iquique'
 
   if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
     return NextResponse.json({ error: 'Fecha invalida (YYYY-MM-DD)' }, { status: 400 })
@@ -54,8 +59,8 @@ export async function POST(request: Request) {
   const svc = serviceClient()
   const { data, error: insErr } = await svc
     .from('bloqueos_horario')
-    .insert({ profesional_id: profesionalId, fecha, motivo })
-    .select('id, fecha, motivo, created_at')
+    .insert({ profesional_id: profesionalId, fecha, motivo, sede })
+    .select('id, fecha, motivo, sede, created_at')
     .single()
 
   if (insErr) return NextResponse.json({ error: insErr.message }, { status: 500 })

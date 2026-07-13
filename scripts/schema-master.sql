@@ -72,7 +72,8 @@ CREATE TABLE citas (
   notas             text,
   servicio          text,
   updated_at        timestamptz DEFAULT now(),
-  eliminado_at      timestamptz
+  eliminado_at      timestamptz,
+  sede              text NOT NULL DEFAULT 'iquique'
 );
 
 CREATE TABLE bloqueos_horario (
@@ -80,7 +81,8 @@ CREATE TABLE bloqueos_horario (
   profesional_id  uuid NOT NULL REFERENCES profesionales(id) ON DELETE CASCADE,
   fecha           date NOT NULL,
   motivo          text,
-  created_at      timestamptz DEFAULT now()
+  created_at      timestamptz DEFAULT now(),
+  sede            text NOT NULL DEFAULT 'iquique'
 );
 
 CREATE TABLE horarios_disponibles (
@@ -90,7 +92,19 @@ CREATE TABLE horarios_disponibles (
   hora_inicio       time NOT NULL,
   hora_fin          time NOT NULL,
   duracion_bloque   integer DEFAULT 45,
-  activo            boolean DEFAULT true
+  activo            boolean DEFAULT true,
+  sede              text NOT NULL DEFAULT 'iquique'
+);
+
+CREATE TABLE viajes_sede (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  profesional_id  uuid REFERENCES profesionales(id),
+  sede            text NOT NULL,
+  fecha_inicio    date NOT NULL,
+  fecha_fin       date NOT NULL,
+  cupo_maximo     integer NOT NULL,
+  activo          boolean DEFAULT true,
+  created_at      timestamptz DEFAULT now()
 );
 
 -- PENDIENTE: contenido/trigger que llena esta tabla no documentado (ver nota arriba).
@@ -174,6 +188,12 @@ CREATE POLICY "authenticated_select_bloqueos" ON bloqueos_horario FOR SELECT USI
 CREATE POLICY "authenticated_insert_bloqueos" ON bloqueos_horario FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 CREATE POLICY "authenticated_update_bloqueos" ON bloqueos_horario FOR UPDATE USING (auth.uid() IS NOT NULL);
 CREATE POLICY "authenticated_delete_bloqueos" ON bloqueos_horario FOR DELETE USING (auth.uid() IS NOT NULL);
+
+ALTER TABLE viajes_sede ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "authenticated_select_viajes" ON viajes_sede FOR SELECT USING (auth.uid() IS NOT NULL);
+CREATE POLICY "authenticated_insert_viajes" ON viajes_sede FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+CREATE POLICY "authenticated_update_viajes" ON viajes_sede FOR UPDATE USING (auth.uid() IS NOT NULL);
+CREATE POLICY "authenticated_delete_viajes" ON viajes_sede FOR DELETE USING (auth.uid() IS NOT NULL);
 
 -- PENDIENTE: no hay policies confirmadas para lead_historial.
 -- Se deja RLS activado sin policies (bloquea todo excepto service_role) como
