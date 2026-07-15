@@ -47,7 +47,7 @@ export async function POST(request: Request) {
         .from('leads')
         .update({ etapa: 'reserva_con_deposito' })
         .eq('id', citaData.lead_id)
-        .select('telefono, email, valor_estimado')
+        .select('telefono, email, valor_estimado, servicio_interes')
         .single()
 
       if (leadErr) console.error('Error actualizando etapa del lead:', leadErr)
@@ -57,6 +57,7 @@ export async function POST(request: Request) {
           value: lead.valor_estimado,
           telefono: lead.telefono,
           email: lead.email,
+          servicioInteres: lead.servicio_interes,
         }).catch((err) => console.error('Error enviando evento a Meta CAPI:', err))
       }
     }

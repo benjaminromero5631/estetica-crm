@@ -9,9 +9,10 @@ interface PurchaseEventInput {
   currency?: string
   telefono?: string | null
   email?: string | null
+  servicioInteres?: string | null
 }
 
-export async function sendPurchaseEvent({ value, currency = 'CLP', telefono, email }: PurchaseEventInput) {
+export async function sendPurchaseEvent({ value, currency = 'CLP', telefono, email, servicioInteres }: PurchaseEventInput) {
   const pixelId = process.env.META_PIXEL_ID
   const accessToken = process.env.META_ACCESS_TOKEN
 
@@ -20,6 +21,15 @@ export async function sendPurchaseEvent({ value, currency = 'CLP', telefono, ema
   const userData: Record<string, string[]> = {}
   if (telefono) userData.ph = [sha256(telefono.replace(/\D/g, ''))]
   if (email) userData.em = [sha256(email)]
+
+  // servicio_interes es texto libre (no enum), asi que esto es un match parcial:
+  // sin dato -> sin_servicio_definido, contiene "otomodel" -> otomodelacion,
+  // cualquier otro valor real -> metodo_regenerativo.
+  const contentName = !servicioInteres
+    ? 'sin_servicio_definido'
+    : servicioInteres.toLowerCase().includes('otomodel')
+      ? 'otomodelacion'
+      : 'metodo_regenerativo'
 
   const res = await fetch(`https://graph.facebook.com/v20.0/${pixelId}/events`, {
     method: 'POST',
@@ -31,7 +41,7 @@ export async function sendPurchaseEvent({ value, currency = 'CLP', telefono, ema
           event_time: Math.floor(Date.now() / 1000),
           action_source: 'system_generated',
           user_data: userData,
-          custom_data: { value, currency },
+          custom_data: { value, currency, content_name: contentName },
         },
       ],
       access_token: accessToken,
