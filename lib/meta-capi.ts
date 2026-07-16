@@ -49,11 +49,13 @@ export async function sendPurchaseEvent({ value, currency = 'CLP', telefono, ema
     }),
   })
 
-  if (!res.ok) {
-    const body = await res.text()
-    console.error('Meta CAPI error:', body)
-    return { ok: false }
+  const body = await res.json()
+
+  if (!res.ok || body.error) {
+    throw new Error(`Meta CAPI error: ${JSON.stringify(body)}`)
   }
+
+  console.log('Meta CAPI respuesta:', JSON.stringify(body))
 
   return { ok: true }
 }
