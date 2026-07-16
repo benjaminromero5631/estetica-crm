@@ -53,12 +53,17 @@ export async function POST(request: Request) {
       if (leadErr) console.error('Error actualizando etapa del lead:', leadErr)
 
       if (lead?.valor_estimado != null) {
-        sendPurchaseEvent({
-          value: lead.valor_estimado,
-          telefono: lead.telefono,
-          email: lead.email,
-          servicioInteres: lead.servicio_interes,
-        }).catch((err) => console.error('Error enviando evento a Meta CAPI:', err))
+        try {
+          await sendPurchaseEvent({
+            value: lead.valor_estimado,
+            telefono: lead.telefono,
+            email: lead.email,
+            servicioInteres: lead.servicio_interes,
+          })
+          console.log('Evento Purchase enviado a Meta CAPI correctamente')
+        } catch (err) {
+          console.error('Error enviando evento a Meta CAPI:', err)
+        }
       }
     }
   }
