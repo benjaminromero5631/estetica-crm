@@ -45,7 +45,6 @@ export async function sendPurchaseEvent({ value, currency = 'CLP', telefono, ema
         },
       ],
       access_token: accessToken,
-      test_event_code: 'TEST3383', // TEMPORAL - sacar despues de verificar en Meta "Probar eventos"
     }),
   })
 
