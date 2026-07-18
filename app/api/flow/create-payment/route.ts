@@ -49,6 +49,7 @@ export async function POST(request: Request) {
     urlReturn:       `${baseUrl}/api/flow/return`,
   }
 
+  console.log('FLOW_DEBUG monto:', clinicConfig.depositoReserva, 'servicio:', clinicConfig.mainService, 'params:', JSON.stringify({ ...params, apiKey: '[REDACTED]' }))
   params.s = sign(params, secret)
 
   const body = new URLSearchParams(params)
