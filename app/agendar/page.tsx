@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 function isoDate(year: number, month: number, day: number): string {
@@ -44,6 +44,22 @@ function AgendarInner() {
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [viaje, setViaje] = useState<{ fecha_inicio: string; fecha_fin: string } | null>(null)
+
+  useEffect(() => {
+    if (sede === 'iquique') return
+    fetch(`/api/public/viaje-activo?sede=${sede}`)
+      .then(res => res.json())
+      .then(({ viaje }) => setViaje(viaje))
+      .catch(() => setViaje(null))
+  }, [sede])
+
+  function isOutsideViaje(day: number): boolean {
+    if (sede === 'iquique') return false
+    if (!viaje) return true
+    const dateStr = isoDate(viewYear, viewMonth, day)
+    return dateStr < viaje.fecha_inicio || dateStr > viaje.fecha_fin
+  }
 
   // Calendar grid
   const firstDay = new Date(viewYear, viewMonth, 1).getDay()
@@ -153,6 +169,11 @@ function AgendarInner() {
       <div className="w-full max-w-md mb-8 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">Agenda tu cita</h1>
         <p className="text-zinc-400 text-sm mt-1">Selecciona una fecha y horario disponible</p>
+        {sede === 'puerto-montt' && (
+          <p className="text-indigo-400 text-xs mt-3 bg-indigo-950/40 border border-indigo-900 rounded-lg px-3 py-2">
+            Otomodelación Definitiva — disponible únicamente el 11, 12 y 13 de agosto en Puerto Montt
+          </p>
+        )}
       </div>
 
       <div className="w-full max-w-md space-y-6">
@@ -195,15 +216,17 @@ function AgendarInner() {
             {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
               const dateStr = isoDate(viewYear, viewMonth, day)
               const past = isPast(day)
+              const outsideViaje = isOutsideViaje(day)
+              const disabled = past || outsideViaje
               const selected = selectedDate === dateStr
               return (
                 <button
                   key={day}
                   onClick={() => selectDate(day)}
-                  disabled={past}
+                  disabled={disabled}
                   className={`
                     mx-auto w-9 h-9 rounded-full text-sm flex items-center justify-center transition-all
-                    ${past ? 'text-zinc-700 cursor-not-allowed' : 'hover:bg-zinc-800 cursor-pointer'}
+                    ${disabled ? 'text-zinc-700 cursor-not-allowed' : 'hover:bg-zinc-800 cursor-pointer'}
                     ${selected ? 'bg-indigo-600 text-white font-semibold hover:bg-indigo-600' : ''}
                   `}
                 >
@@ -250,6 +273,12 @@ function AgendarInner() {
                   )
                 })}
               </div>
+            )}
+
+            {slots.length > 0 && (
+              <p className="text-zinc-500 text-xs mt-4 text-center">
+                El depósito de $15.000 reserva tu cupo de evaluación y se descuenta del valor total del tratamiento ($699.990) al confirmar el procedimiento.
+              </p>
             )}
           </div>
         )}
