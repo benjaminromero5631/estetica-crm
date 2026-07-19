@@ -1,38 +1,25 @@
-import { createClient } from '@/lib/supabase-server'
 import { serviceClient } from '@/lib/supabase-service'
 import { NextResponse } from 'next/server'
-
-async function getProfesionalId() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'No autenticado', profesionalId: null }
-
-  const svc = serviceClient()
-  const { data: profesional, error } = await svc
-    .from('profesionales')
-    .select('id')
-    .eq('auth_user_id', user.id)
-    .maybeSingle()
-
-  if (error) return { error: error.message, profesionalId: null }
-  if (!profesional) return { error: 'NO_VINCULADO', profesionalId: null }
-
-  return { error: null, profesionalId: profesional.id as string }
-}
+import { getProfesionalScope, resolveProfesionalIdForWrite } from '@/lib/auth-scope'
 
 export async function GET() {
-  const { error, profesionalId } = await getProfesionalId()
+  const { error, profesionalId, isAdmin } = await getProfesionalScope()
   if (error) {
     const status = error === 'NO_VINCULADO' ? 200 : 401
     return NextResponse.json({ error, viajes: [] }, { status })
   }
 
   const svc = serviceClient()
-  const { data, error: vErr } = await svc
+  let query = svc
     .from('viajes_sede')
     .select('id, sede, fecha_inicio, fecha_fin, cupo_maximo, activo, created_at')
-    .eq('profesional_id', profesionalId)
     .order('fecha_inicio', { ascending: false })
+
+  if (!isAdmin) {
+    query = query.eq('profesional_id', profesionalId)
+  }
+
+  const { data, error: vErr } = await query
 
   if (vErr) return NextResponse.json({ error: vErr.message }, { status: 500 })
 
@@ -40,8 +27,13 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { error, profesionalId } = await getProfesionalId()
+  const { error, profesionalId, isAdmin } = await getProfesionalScope()
   if (error) return NextResponse.json({ error }, { status: error === 'NO_VINCULADO' ? 400 : 401 })
+
+  const writeProfesionalId = await resolveProfesionalIdForWrite(isAdmin, profesionalId)
+  if (!writeProfesionalId) {
+    return NextResponse.json({ error: 'No hay profesional activo para asignar' }, { status: 400 })
+  }
 
   const body = await request.json()
   const sede: string = body.sede
@@ -59,7 +51,7 @@ export async function POST(request: Request) {
   const svc = serviceClient()
   const { data, error: insErr } = await svc
     .from('viajes_sede')
-    .insert({ profesional_id: profesionalId, sede, fecha_inicio, fecha_fin, cupo_maximo, activo: true })
+    .insert({ profesional_id: writeProfesionalId, sede, fecha_inicio, fecha_fin, cupo_maximo, activo: true })
     .select('id, sede, fecha_inicio, fecha_fin, cupo_maximo, activo, created_at')
     .single()
 
@@ -69,8 +61,13 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const { error, profesionalId } = await getProfesionalId()
+  const { error, profesionalId, isAdmin } = await getProfesionalScope()
   if (error) return NextResponse.json({ error }, { status: error === 'NO_VINCULADO' ? 400 : 401 })
+
+  const writeProfesionalId = await resolveProfesionalIdForWrite(isAdmin, profesionalId)
+  if (!writeProfesionalId) {
+    return NextResponse.json({ error: 'No hay profesional activo para asignar' }, { status: 400 })
+  }
 
   const body = await request.json()
   const id: string = body.id
@@ -88,7 +85,7 @@ export async function PATCH(request: Request) {
     .from('viajes_sede')
     .update(patch)
     .eq('id', id)
-    .eq('profesional_id', profesionalId)
+    .eq('profesional_id', writeProfesionalId)
     .select('id, sede, fecha_inicio, fecha_fin, cupo_maximo, activo, created_at')
     .single()
 

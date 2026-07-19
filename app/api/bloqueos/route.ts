@@ -1,27 +1,9 @@
-import { createClient } from '@/lib/supabase-server'
 import { serviceClient } from '@/lib/supabase-service'
 import { NextResponse } from 'next/server'
-
-async function getProfesionalId() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'No autenticado', profesionalId: null }
-
-  const svc = serviceClient()
-  const { data: profesional, error } = await svc
-    .from('profesionales')
-    .select('id')
-    .eq('auth_user_id', user.id)
-    .maybeSingle()
-
-  if (error) return { error: error.message, profesionalId: null }
-  if (!profesional) return { error: 'NO_VINCULADO', profesionalId: null }
-
-  return { error: null, profesionalId: profesional.id as string }
-}
+import { getProfesionalScope, resolveProfesionalIdForWrite } from '@/lib/auth-scope'
 
 export async function GET(request: Request) {
-  const { error, profesionalId } = await getProfesionalId()
+  const { error, profesionalId, isAdmin } = await getProfesionalScope()
   if (error) {
     const status = error === 'NO_VINCULADO' ? 200 : 401
     return NextResponse.json({ error, bloqueos: [] }, { status })
@@ -31,12 +13,17 @@ export async function GET(request: Request) {
   const sede = searchParams.get('sede') || 'iquique'
 
   const svc = serviceClient()
-  const { data, error: bErr } = await svc
+  let query = svc
     .from('bloqueos_horario')
     .select('id, fecha, motivo, sede, created_at')
-    .eq('profesional_id', profesionalId)
     .eq('sede', sede)
     .order('fecha', { ascending: true })
+
+  if (!isAdmin) {
+    query = query.eq('profesional_id', profesionalId)
+  }
+
+  const { data, error: bErr } = await query
 
   if (bErr) return NextResponse.json({ error: bErr.message }, { status: 500 })
 
@@ -44,8 +31,13 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { error, profesionalId } = await getProfesionalId()
+  const { error, profesionalId, isAdmin } = await getProfesionalScope()
   if (error) return NextResponse.json({ error }, { status: error === 'NO_VINCULADO' ? 400 : 401 })
+
+  const writeProfesionalId = await resolveProfesionalIdForWrite(isAdmin, profesionalId)
+  if (!writeProfesionalId) {
+    return NextResponse.json({ error: 'No hay profesional activo para asignar' }, { status: 400 })
+  }
 
   const body = await request.json()
   const fecha: string = body.fecha
@@ -59,7 +51,7 @@ export async function POST(request: Request) {
   const svc = serviceClient()
   const { data, error: insErr } = await svc
     .from('bloqueos_horario')
-    .insert({ profesional_id: profesionalId, fecha, motivo, sede })
+    .insert({ profesional_id: writeProfesionalId, fecha, motivo, sede })
     .select('id, fecha, motivo, sede, created_at')
     .single()
 
@@ -69,8 +61,13 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const { error, profesionalId } = await getProfesionalId()
+  const { error, profesionalId, isAdmin } = await getProfesionalScope()
   if (error) return NextResponse.json({ error }, { status: error === 'NO_VINCULADO' ? 400 : 401 })
+
+  const writeProfesionalId = await resolveProfesionalIdForWrite(isAdmin, profesionalId)
+  if (!writeProfesionalId) {
+    return NextResponse.json({ error: 'No hay profesional activo para asignar' }, { status: 400 })
+  }
 
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
@@ -81,7 +78,7 @@ export async function DELETE(request: Request) {
     .from('bloqueos_horario')
     .delete()
     .eq('id', id)
-    .eq('profesional_id', profesionalId)
+    .eq('profesional_id', writeProfesionalId)
 
   if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 })
 
