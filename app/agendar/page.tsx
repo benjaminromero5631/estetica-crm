@@ -176,8 +176,8 @@ function AgendarInner() {
         <h1 className="text-2xl font-semibold tracking-tight">Agenda tu cita</h1>
         <p className="text-zinc-400 text-sm mt-1">Selecciona una fecha y horario disponible</p>
         {sede === 'puerto-montt' && viaje?.fecha_limite_evaluacion && (
-          <p className="text-indigo-400 text-xs mt-3 bg-indigo-950/40 border border-indigo-900 rounded-lg px-3 py-2">
-            Agenda tu evaluación virtual antes del {formatShortDate(viaje.fecha_limite_evaluacion)}. El día del procedimiento en Puerto Montt se coordina después de la evaluación.
+          <p className="text-amber-400 text-xs mt-3 bg-amber-950/40 border border-amber-900 rounded-lg px-3 py-2">
+            ⚠️ Estoy evaluando pacientes solo hasta el {formatShortDate(viaje.fecha_limite_evaluacion)}, antes de viajar a Puerto Montt. Después de esa fecha no podré agendar más evaluaciones para este viaje.
           </p>
         )}
       </div>
