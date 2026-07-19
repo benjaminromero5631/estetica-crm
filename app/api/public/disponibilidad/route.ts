@@ -42,7 +42,6 @@ export async function GET(request: Request) {
 
   const [year, month, day] = fecha.split('-').map(Number)
   const dayOfWeek = new Date(year, month - 1, day).getDay()
-  console.log('DISPO_DEBUG entrada:', { fecha, sede, dayOfWeek })
 
   const supabase = serviceClient()
 
@@ -55,19 +54,17 @@ export async function GET(request: Request) {
   if (pErr) return NextResponse.json({ error: pErr.message }, { status: 500 })
 
   const profesional_id = profesionales?.[0]?.id ?? null
-  console.log('DISPO_DEBUG profesional:', { profesional_id })
 
   if (!profesional_id) {
     return NextResponse.json({ slots: [], profesional_id: null })
   }
 
-  // Sedes distintas de 'iquique' requieren un viaje activo que cubra la fecha,
-  // ya que la profesional solo esta ahi de forma esporadica.
-  let viaje: { id: string; fecha_inicio: string; fecha_fin: string; cupo_maximo: number; fecha_limite_evaluacion: string | null } | null = null
+  // Sedes distintas de 'iquique' requieren un viaje activo cuya fecha_limite_evaluacion
+  // cubra la fecha, ya que la profesional solo esta ahi de forma esporadica.
   if (sede !== 'iquique') {
     const { data: viajesList, error: vErr } = await supabase
       .from('viajes_sede')
-      .select('id, fecha_inicio, fecha_fin, cupo_maximo, fecha_limite_evaluacion')
+      .select('fecha_limite_evaluacion')
       .eq('profesional_id', profesional_id)
       .eq('sede', sede)
       .eq('activo', true)
@@ -80,8 +77,6 @@ export async function GET(request: Request) {
     if (!viajes.fecha_limite_evaluacion || fecha > viajes.fecha_limite_evaluacion) {
       return NextResponse.json({ slots: [], profesional_id })
     }
-    viaje = viajes
-    console.log('DISPO_DEBUG viaje:', { viaje, fecha, comparacion: viaje ? fecha > viaje.fecha_limite_evaluacion! : null })
   }
 
   const [{ data: bloqueo, error: bErr }, { data: horarios, error: hErr }, { data: citas, error: cErr }] =
@@ -107,10 +102,9 @@ export async function GET(request: Request) {
         .select('hora_inicio')
         .eq('profesional_id', profesional_id)
         .eq('fecha', fecha)
+        .eq('pago_confirmado', true)
         .is('eliminado_at', null),
     ])
-
-  console.log('DISPO_DEBUG resultados:', { bloqueo, horarios, dayOfWeek, sede, profesional_id })
 
   if (bErr) return NextResponse.json({ error: bErr.message }, { status: 500 })
   if (hErr) return NextResponse.json({ error: hErr.message }, { status: 500 })
@@ -118,23 +112,6 @@ export async function GET(request: Request) {
 
   if (bloqueo) {
     return NextResponse.json({ slots: [], profesional_id })
-  }
-
-  if (viaje) {
-    const { count, error: countErr } = await supabase
-      .from('citas')
-      .select('id', { count: 'exact', head: true })
-      .eq('profesional_id', profesional_id)
-      .eq('sede', sede)
-      .gte('fecha', viaje.fecha_inicio)
-      .lte('fecha', viaje.fecha_fin)
-      .is('eliminado_at', null)
-      .neq('estado', 'cancelada')
-
-    if (countErr) return NextResponse.json({ error: countErr.message }, { status: 500 })
-    if ((count ?? 0) >= viaje.cupo_maximo) {
-      return NextResponse.json({ slots: [], profesional_id })
-    }
   }
 
   const ocupados = new Set((citas ?? []).map((c: { hora_inicio: string }) => c.hora_inicio))
