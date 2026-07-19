@@ -13,6 +13,12 @@ function formatDisplayDate(dateStr: string): string {
   return d.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 }
 
+function formatShortDate(dateStr: string): string {
+  const [year, month, day] = dateStr.split('-').map(Number)
+  const d = new Date(year, month - 1, day)
+  return d.toLocaleDateString('es-CL', { day: 'numeric', month: 'long' })
+}
+
 function formatTime(time: string): string {
   const [h, m] = time.split(':')
   const hour = parseInt(h)
@@ -44,7 +50,7 @@ function AgendarInner() {
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [viaje, setViaje] = useState<{ fecha_inicio: string; fecha_fin: string } | null>(null)
+  const [viaje, setViaje] = useState<{ fecha_inicio: string; fecha_fin: string; fecha_limite_evaluacion: string } | null>(null)
 
   useEffect(() => {
     if (sede === 'iquique') return
@@ -56,9 +62,9 @@ function AgendarInner() {
 
   function isOutsideViaje(day: number): boolean {
     if (sede === 'iquique') return false
-    if (!viaje) return true
+    if (!viaje || !viaje.fecha_limite_evaluacion) return true
     const dateStr = isoDate(viewYear, viewMonth, day)
-    return dateStr < viaje.fecha_inicio || dateStr > viaje.fecha_fin
+    return dateStr > viaje.fecha_limite_evaluacion
   }
 
   // Calendar grid
@@ -169,9 +175,9 @@ function AgendarInner() {
       <div className="w-full max-w-md mb-8 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">Agenda tu cita</h1>
         <p className="text-zinc-400 text-sm mt-1">Selecciona una fecha y horario disponible</p>
-        {sede === 'puerto-montt' && (
+        {sede === 'puerto-montt' && viaje?.fecha_limite_evaluacion && (
           <p className="text-indigo-400 text-xs mt-3 bg-indigo-950/40 border border-indigo-900 rounded-lg px-3 py-2">
-            Otomodelación Definitiva — disponible únicamente el 11, 12 y 13 de agosto en Puerto Montt
+            Agenda tu evaluación virtual antes del {formatShortDate(viaje.fecha_limite_evaluacion)}. El día del procedimiento en Puerto Montt se coordina después de la evaluación.
           </p>
         )}
       </div>

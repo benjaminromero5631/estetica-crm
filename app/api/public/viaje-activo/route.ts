@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   const supabase = serviceClient()
   const { data: viaje, error } = await supabase
     .from('viajes_sede')
-    .select('fecha_inicio, fecha_fin')
+    .select('fecha_inicio, fecha_fin, fecha_limite_evaluacion')
     .eq('sede', sede)
     .eq('activo', true)
     .order('fecha_inicio', { ascending: false })
