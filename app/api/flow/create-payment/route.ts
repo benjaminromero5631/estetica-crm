@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     commerceOrder:   citaId,
     currency:        'CLP',
     email,
-    subject:         `Reserva ${clinicConfig.mainService}`,
+    subject:         'Reserva Evaluación Otomodelación Definitiva',
     urlConfirmation: `${baseUrl}/api/flow/confirm`,
     urlReturn:       `${baseUrl}/api/flow/return`,
   }
