@@ -61,18 +61,21 @@ export async function GET(request: Request) {
   // ya que la profesional solo esta ahi de forma esporadica.
   let viaje: { id: string; fecha_inicio: string; fecha_fin: string; cupo_maximo: number } | null = null
   if (sede !== 'iquique') {
-    const { data: viajes, error: vErr } = await supabase
+    const { data: viajesList, error: vErr } = await supabase
       .from('viajes_sede')
-      .select('id, fecha_inicio, fecha_fin, cupo_maximo')
+      .select('id, fecha_inicio, fecha_fin, cupo_maximo, fecha_limite_evaluacion')
       .eq('profesional_id', profesional_id)
       .eq('sede', sede)
       .eq('activo', true)
-      .lte('fecha_inicio', fecha)
-      .gte('fecha_fin', fecha)
-      .maybeSingle()
+      .order('fecha_inicio', { ascending: false })
+      .limit(1)
 
     if (vErr) return NextResponse.json({ error: vErr.message }, { status: 500 })
+    const viajes = viajesList?.[0] ?? null
     if (!viajes) return NextResponse.json({ slots: [], profesional_id })
+    if (!viajes.fecha_limite_evaluacion || fecha > viajes.fecha_limite_evaluacion) {
+      return NextResponse.json({ slots: [], profesional_id })
+    }
     viaje = viajes
   }
 
