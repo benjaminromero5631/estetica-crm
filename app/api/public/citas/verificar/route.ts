@@ -1,6 +1,8 @@
 import { serviceClient } from '@/lib/supabase-service'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.N8N_WEBHOOK_SECRET}`) {

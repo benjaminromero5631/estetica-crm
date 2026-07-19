@@ -1,6 +1,8 @@
 import { serviceClient } from '@/lib/supabase-service'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 function toMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number)
   return h * 60 + m
