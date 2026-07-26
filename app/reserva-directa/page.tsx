@@ -363,7 +363,12 @@ function ReservaDirectaInner() {
 
             {slots.length > 0 && (
               <p className="text-zinc-500 text-xs mt-4 text-center">
-                El depósito de $15.000 reserva tu cupo de evaluación y se descuenta del valor total del tratamiento ($699.990) al confirmar el procedimiento.
+                El depósito de $15.000 reserva tu cupo de evaluación y se descuenta del
+                valor del tratamiento (
+                <span className="line-through text-zinc-600">$699.990</span>
+                {' '}
+                <span className="text-zinc-300 font-medium">$450.000</span>
+                ) al confirmar el procedimiento.
               </p>
             )}
           </div>
