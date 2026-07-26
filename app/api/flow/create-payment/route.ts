@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   const supabase = serviceClient()
   const { data: cita, error: citaErr } = await supabase
     .from('citas')
-    .select('id, lead_id, leads(email, nombre)')
+    .select('id, lead_id, servicio, sede, leads(email, nombre)')
     .eq('id', citaId)
     .single()
 
@@ -33,6 +33,20 @@ export async function POST(request: Request) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const lead = (cita as any).leads
   const email: string = lead?.email ?? 'sin-email@reserva.cl'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const servicio = (cita as any).servicio as string | null
+
+  const depositoServicio = servicio
+    ? clinicConfig.depositoPorServicio[servicio as keyof typeof clinicConfig.depositoPorServicio]
+    : null
+  const amount = depositoServicio ?? clinicConfig.depositoReserva
+
+  const SUBJECTS: Record<string, string> = {
+    otomodelacion: 'Reserva Evaluación Otomodelación Definitiva',
+  }
+  const subject = servicio && SUBJECTS[servicio]
+    ? SUBJECTS[servicio]
+    : 'Reserva Evaluación Otomodelación Definitiva'
 
   const apiKey = process.env.FLOW_API_KEY!
   const secret = process.env.FLOW_SECRET_KEY!
@@ -40,11 +54,11 @@ export async function POST(request: Request) {
 
   const params: Record<string, string> = {
     apiKey,
-    amount:          String(clinicConfig.depositoReserva),
+    amount:          String(amount),
     commerceOrder:   citaId,
     currency:        'CLP',
     email,
-    subject:         'Reserva Evaluación Otomodelación Definitiva',
+    subject,
     urlConfirmation: `${baseUrl}/api/flow/confirm`,
     urlReturn:       `${baseUrl}/api/flow/return`,
   }
