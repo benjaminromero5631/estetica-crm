@@ -62,6 +62,10 @@ const defaultClinicConfig = {
   // Monto que paga el lead al momento de reservar (cobrado via Flow)
   depositoReserva: 15000, // CLP — editable por clinica
 
+  depositoPorServicio: {
+    otomodelacion: 15000,
+  } as Record<string, number>,
+
   // Zeltra performance fee per reserva
   zeltraFeePerReserva: 15000, // CLP
 
